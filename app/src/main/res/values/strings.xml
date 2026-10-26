@@ -9,7 +9,7 @@
     <string name="game_score_combo">%1$d 分 · %2$d 连击</string>
     <string name="game_settlement">获得 %1$d 分 · 最佳 %2$d 分\n最高 %3$d 连击，奶蛙记住这次一起玩了。</string>
     <string name="app_name">奶蛙桌宠</string>
-    <string name="personal_material">此公开源码不含角色素材，请自行配置有权使用的动画资源。</string>
+    <string name="personal_material">素材：参考模型生成的动作，来源与使用范围见项目说明。</string>
     <string name="materials_unavailable">角色素材尚未通过检查。</string>
     <string name="idle_required">缺少通过视觉、透明度与来源检查的待机素材，暂不创建角色悬浮窗。</string>
     <string name="stop_pet">关闭桌宠</string>

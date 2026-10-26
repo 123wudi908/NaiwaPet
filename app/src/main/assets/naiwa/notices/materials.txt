@@ -1,0 +1,6 @@
+PROJECT ANIMATION MATERIALS
+These animation frames were generated for this project and are included at the repository maintainer's request.
+Only runtime PNG frames and their playback configuration are provided.
+Original reference images, videos, prompts, generation drafts and private provenance archives are excluded.
+The recorded usage scope remains personal use. No additional rights in the underlying character or commercial license are asserted.
+This notice and the frame hashes support file-integrity checks; they do not replace an actual rights determination.

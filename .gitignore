@@ -22,7 +22,7 @@ captures/
 dist/
 backups/
 media-source/
-# This public repository intentionally excludes character and reference media.
+# Keep reference and unreviewed media out of the repository.
 *.png
 *.jpg
 *.jpeg
@@ -41,5 +41,6 @@ media-source/
 *.zip
 *.7z
 *.rar
-# Developers can keep authorized animation frames and provenance locally.
-app/src/main/assets/naiwa/*/
+# Only the reviewed runtime frames are shared; the publication guard checks hashes.
+!app/src/main/assets/naiwa/*/frame*.png
+app/src/main/assets/naiwa/notices/private-*.txt

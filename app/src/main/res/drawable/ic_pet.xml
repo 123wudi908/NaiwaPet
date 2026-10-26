@@ -1,4 +1,4 @@
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="#50635B" />
-    <corners android:radius="10dp" />
-</shape>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <path android:fillColor="#B57619" android:pathData="M24,3A21,21 0,1 0,24 45A21,21 0,1 0,24 3M14,18A3,3 0,1 1,14 24A3,3 0,1 1,14 18M34,18A3,3 0,1 1,34 24A3,3 0,1 1,34 18M14,29L34,29L30,34L18,34Z" />
+</vector>

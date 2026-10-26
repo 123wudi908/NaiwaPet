@@ -17,75 +17,181 @@
   "actions": {
     "idle": {
       "weight": 0,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 0,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "ab34356cfd80adb32228305081498099a4898bc2275930cf31c6aa70d17b4ef0",
+        "frame02.png": "a5c5588034f16c1f940d53ed1c9801d374f0d257a59e3f4b0e4b4c91026623bf",
+        "frame03.png": "ff6723ec5197c6ab0777d179681afc042566bf5dfe67f2663fc7b8ebb6c4ff02",
+        "frame04.png": "688be3bd387483070aaa84ddd7caa3ff59070da7cf6a669e39f9619faad92a30",
+        "frame05.png": "ac8e9c817b6fa701ae6bb13cea4e384785e25f60719bcb6165b56e48c14ca0b6",
+        "frame06.png": "8d3f480360d210d2b830a25243135bc7a5c4223ea5ec2d0156542e987abc2d86"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "blink": {
       "weight": 40,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 4000,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "89cdcb4796bc4ece6a65de43342533bc700c8e25ebb3b3d38f9898f12eab6b48",
+        "frame02.png": "e40ac2c2054cf0db6e9e9e6a405e5da0df4e10555926bff78ca52f475296a3ae",
+        "frame03.png": "09d461e273f0d323e9208de747040b78f456b245b41cb7346895e708398a047b",
+        "frame04.png": "4ec28336dcd346d46a4a4a9af09e2052e807ac4016f8ce0db010ae66169e578c",
+        "frame05.png": "58432a0ef20700fe7801a1bb8bc361415433029ee484527b8dbf5544a16adcc0",
+        "frame06.png": "bbbce47162cf2899ff950ba77663574d655defaddea7209bec8f90ac1ac22f73"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "wave": {
       "weight": 20,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 15000,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "d289337b5cdf8511a69c5364d22d660701bc456e8f71b2d3a83d07caede6ca38",
+        "frame02.png": "3b0abda7858a8f2764c42539a286b2bf35ba060714fe3e7fa23f18830f3aa56d",
+        "frame03.png": "cb5cc2b1e15797004fd044b0d7708e9864b9c9aa49705e78ef08c53ca0a1a7f6",
+        "frame04.png": "eae985a3befdabb5fd6e08868c6fe6e4da0ca45cfa9dd6e94000151008e4874f",
+        "frame05.png": "e9ec801d40a46cda237344ad168d22108ee04fb4ba5f746df8be8b3769da955d",
+        "frame06.png": "86e571f580300309b812b4bf5b07bd85175e90a2392ac4461488c866798920be"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "happy": {
       "weight": 18,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 18000,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "91e0fe71fe7c2ab93dc7b1648220f39b75a4ce261895654d6d679d8cb88a1939",
+        "frame02.png": "54bd687a4c7283e9c78ab19194c22330d99ba10cb34fe4b7b2e9709a28a31b22",
+        "frame03.png": "a68acfc5c27f78afa54157837e04d0791408b0e3aa18c57e4356812eba9de96c",
+        "frame04.png": "57164bc2c3033af9fa3a6f73e48533997e43777f434324d1fcfe52fa55ad3af5",
+        "frame05.png": "f70473cb9482f61f8cd198a2e05c32703ae48ba41b1c19566852b106e781b781",
+        "frame06.png": "5130af3dc137e3b9c178a5ad5baa78748f4887820ad5a638f977e4cec1abb164"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "walk": {
       "weight": 15,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 0,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "b2208515af05cdb0d551f101e2666354acd5ba758b4bf8bb22d6fcfca787a1d1",
+        "frame02.png": "6536524718f101834b1d1c51667fe376f9be47163fdf0f1737f975ef7cc53ef4",
+        "frame03.png": "7d6d813cd96e806f802db0f8f7535a1935367ef5085260ec7dd90be443307cf7",
+        "frame04.png": "61e2935fe97b4d16255b95edff324b1908ea3b3ec664ad530d5986416aa1309a",
+        "frame05.png": "7a08e8e96d0b42636b813db9107613b25b27cf05183dc1a916d914067f11a708",
+        "frame06.png": "05bb20a1c75b2a2735b53f3b5859bdcee647be807a6d869fb5ce9a3897eae37b"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "think": {
       "weight": 9,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 30000,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "924f7a133e9e0a8cadb28d18e5c661cec64129687c4e473f0b5851b02c5b08d3",
+        "frame02.png": "197c3d1d7da43fea19252c1a4d906368a37e95c4aa2a1be926710726fd037300",
+        "frame03.png": "1cd6cd1978de9da9733b75cbcc9c1006c30b493b8336b983ff72f723fd58d218",
+        "frame04.png": "1d20233d05e7f649c4911d584ef3d5117abb2eb937413ba9eac67d4b9b49bbee",
+        "frame05.png": "0f7f93980421957b7e73b26d68da818741a84cea36095372b33e69e632a6056b",
+        "frame06.png": "1c43e6c7a70b8bf28b4f671f377cc28ab7ecb80f87b0e5d158d305177bc2b4c9"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "laugh": {
       "weight": 7,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 60000,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "04d3328d037b8ac50aec8a733b16087dd978770a3967b3bd1897fa7a8b52dcfc",
+        "frame02.png": "2921ad6e9a8b453d1aece1653c8867fad28463ee3fedd7927a8f11e632c78b56",
+        "frame03.png": "9ee9f3bbeadc015b4f1010a0477981d745be5a30f89fa7d1df717d3edbe4271b",
+        "frame04.png": "d9142c28e337dcc0abed5f470b9fbb87f3d6be90861233ae9533c94a69663b43",
+        "frame05.png": "41779810f2934297204af7bcbd9a0a233e6efdc2d078002b278946afd84f5c13",
+        "frame06.png": "ea3d605c4190c2d7e43b5c4e791ba27d99456941acf3c470f8380745119587f1",
+        "frame07.png": "69b1c94672c7d521422ce7f0847e72757fd2476d2227e8128ea64e2d6402d104",
+        "frame08.png": "c595da21b540c6587c3bffe47e102e6024c054bf1a8f8b284d3f3153216c3310"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "dance": {
       "weight": 4,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 90000,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "c6d5437850386dcbdd9eb542699fadcf95c82c7dd9595b6415fa32532533f0d6",
+        "frame02.png": "02918489f577a936523383aa4bed5cdd83d96598b3f35b041c50eaf70f07e80e",
+        "frame03.png": "37005308024e47a7d3366218ae2cb2e9c3d66773fea062e957ebf68a1f5bdcbf",
+        "frame04.png": "fdf91ff2b2e6ad8e4f2b1bba7975cbc57bfb8d6a8251c016a659afa2fd3d9df6",
+        "frame05.png": "11be6d4ee1976c6a7de3f644f229d89bee9fa28ac6bad0a84afe9fcbe285682c",
+        "frame06.png": "ccdcb4b36e2dfb6a4649741754adc54987bbb1ebcb8af07e39517b3e975cdfa3"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "dance_subway": {
       "weight": 0,
@@ -97,12 +203,25 @@
     },
     "fake_fall": {
       "weight": 2,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 120000,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "2c16d4e2b1eb62b885522effa5a8d4c988bde96ee92dabe6414122aef49f3b43",
+        "frame02.png": "15eb201bdd7ea692de3c96adc64ca26eb5d33ef5983899710a7e686f62ec6636",
+        "frame03.png": "b52672d1d700af156d0ec6aadd662e1b5fcb0f5bf0a0a9257ba25efb8c5efa0e",
+        "frame04.png": "4835d3e6066ce8e8fd773317dbe04aaa3d00b79f4d1459cdcd2d57753618fa09",
+        "frame05.png": "b4b7abbfd551391c95122cb576f03ae8e7700bcda4954889ba3a86d064f73588",
+        "frame06.png": "b1c38ba048e1e5c63d7cb78e6dc1239324f8eb728fc2f178d63b4b082faa6d78"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "roll_laugh": {
       "weight": 0,
@@ -114,39 +233,91 @@
     },
     "laugh_fall": {
       "weight": 2,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 120000,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "18062051d3798f3aa6226ac4ebaf3943a7e61be84a75ba383827a445db6296cf",
+        "frame02.png": "79ec70867c2eaf6347b9d4c98b81e70cc362495038f01341e9ee5eebca2ce84a",
+        "frame03.png": "cc7e0158c46493fe4b9ec387a9656cfd3d268edf6533267af488e51a84ea4a19",
+        "frame04.png": "2325b1294c714f13ac1bab9b24b19094b1e1867ac383856b4f21e087aafc7211",
+        "frame05.png": "7c8c0e9a6d2514d63a3591b8d1a1334499e16b5e5b2328ac94e2b56f8dec7430",
+        "frame06.png": "c63d926fa7a86e4cd6dee51a60f129c2faabff7e747660f402eb04b6efd9fe29"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "loading_brain": {
       "weight": 3,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 60000,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "2d288f4c25c476f3ede99e769af5cf03045e2d19eb4a545e61c2814856325b22",
+        "frame02.png": "4279437f487645453bea3456f1b5f7eb90dff39e66ba2a270db757141e977e4d",
+        "frame03.png": "d8d3fbae3ed4ab81b578007b5c82ab9473429c0f4f0f5158ed27151c7ef8bc97",
+        "frame04.png": "c9644ca2a7501cae00f452d85f2c081d9dcfab9768aa52c45ffb0bfeff2bbd84",
+        "frame05.png": "0a58cea5a179eee87a30744b4d5d7c889a207bfbcc4b4a0854a20b61a0614bc0",
+        "frame06.png": "0d1cd91bcddbb00edfcda7f14cf33dc444d3417e75cbfb74ce4d7dd17cc5b409"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "freeze": {
       "weight": 2,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 90000,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "e64c5bd2a96135b8e7adbe2f5dfd7a333de03e439786e1ba363f403fce84388c",
+        "frame02.png": "557eb61dd55e70e55c789eb4d51320951ff5b58c8cf06fa83bbced7d290108ba",
+        "frame03.png": "30416a5c9055b47bb76eec0723027d43188bb749e1133e3c10cf1a7e04d6a8b1",
+        "frame04.png": "336029037e985467e265433d04863650c861cfc5e606b85a8763d31349033731",
+        "frame05.png": "c9f6f6f75c0f8d70be9049774d4966003bb7ccd63637b5ea0b884b345d1e3f4f",
+        "frame06.png": "d90692c3994057351646e959ebb3775d45f8c3f07595bdfcfa9219ba58c22b41"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "wobble": {
       "weight": 5,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": true,
       "allowManual": true,
       "cooldownMillis": 15000,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "4e69fadadca2ed7ce70fa53064b99060500d03869cbb659deefa916716e65c4a",
+        "frame02.png": "4811dd06afba96dea7862ef4fed2d086c91319988858cc133b766880afc1bbe1",
+        "frame03.png": "6e379919e6ad007223301d9d0629aa8d5435b24ef28c78cd2a58e3db5e3b03ae",
+        "frame04.png": "1ad0fee5b0da1b02363e82d7d40b3a6d4b2dcf0f12225452f131caafaa589b62",
+        "frame05.png": "80c4ae108536525cdfd08172f096a4f405627397c18b59d5217f49dec514d681",
+        "frame06.png": "8add5cc7fb2625db065229b8e2e24ebbf9aea1f25365aad71596d0f569009d80"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     },
     "sit": {
       "weight": 0,
@@ -214,12 +385,25 @@
     },
     "belly_drum": {
       "weight": 0,
-      "materialStatus": "missing",
-      "qualityApproved": false,
+      "materialStatus": "formal",
+      "qualityApproved": true,
       "allowAutomatic": false,
       "allowManual": true,
       "cooldownMillis": 550,
-      "sha256": {}
+      "sha256": {
+        "frame01.png": "44c92f0bbf698c3655b4faf08a15740cd612d241b87d27f953bed94d3048b48b",
+        "frame02.png": "7a7ad71117f93fdd58774a006964215155bd681c71a4e20a2577d8fec4aaea77",
+        "frame03.png": "233a15bbecb8f1730f0f80b06b372651dba1a86facf49d79f7847ccdfe19eb58",
+        "frame04.png": "5c96ccf4ada6d6c2703f6d61bac426152291b2d7dad9ce7a8ddb3b06516eebd5",
+        "frame05.png": "f94fe0caf0536a861e42d3f0c3ac60547c8c2ddabcd2d4141017c251a0f7d83e",
+        "frame06.png": "497fb91386c5429a60080b4b2856c5f8a4d5af9f79a5ec1d7338551878c4fcd6"
+      },
+      "source": {
+        "usageScope": "private-personal",
+        "origin": "Project-generated animation frames",
+        "evidencePath": "naiwa/notices/materials.txt",
+        "evidenceSha256": "212aed57600b0ad2a236cbab09bec9375fa1b3939c6846136d66474a218cd78f"
+      }
     }
   }
 }

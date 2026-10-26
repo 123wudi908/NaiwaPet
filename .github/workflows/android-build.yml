@@ -1,4 +1,4 @@
-name: Android Source Verification
+name: Android Project Verification
 
 on:
   push:
@@ -25,8 +25,11 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v4.0.4
-      - name: Verify source-only publication
-        run: node scripts/verify-public-source.mjs
+      - name: Verify publication and reviewed animation frames
+        run: |
+          node scripts/verify-public-source.mjs
+          node scripts/verify-assets.mjs
+          node scripts/verify-behavior.mjs
       - name: Install fixed Android SDK packages
         run: |
           mkdir -p build/logs
