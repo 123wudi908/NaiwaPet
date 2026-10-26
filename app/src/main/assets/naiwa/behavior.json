@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 2,
+  "automaticBehavior": {
+    "enabledByDefault": true,
+    "minIntervalMillis": 3000,
+    "maxIntervalMillis": 8000
+  },
+  "automaticMovement": {
+    "enabledByDefault": false,
+    "minIntervalMillis": 30000,
+    "maxIntervalMillis": 90000,
+    "speedDpPerSecond": 32
+  },
+  "interaction": {
+    "resumeDelayMillis": 1500
+  },
+  "actions": {
+    "idle": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 0,
+      "sha256": {}
+    },
+    "blink": {
+      "weight": 40,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 4000,
+      "sha256": {}
+    },
+    "wave": {
+      "weight": 20,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 15000,
+      "sha256": {}
+    },
+    "happy": {
+      "weight": 18,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 18000,
+      "sha256": {}
+    },
+    "walk": {
+      "weight": 15,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 0,
+      "sha256": {}
+    },
+    "think": {
+      "weight": 9,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 30000,
+      "sha256": {}
+    },
+    "laugh": {
+      "weight": 7,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 60000,
+      "sha256": {}
+    },
+    "dance": {
+      "weight": 4,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 90000,
+      "sha256": {}
+    },
+    "dance_subway": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": false,
+      "allowManual": false,
+      "sha256": {}
+    },
+    "fake_fall": {
+      "weight": 2,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 120000,
+      "sha256": {}
+    },
+    "roll_laugh": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": false,
+      "allowManual": false,
+      "sha256": {}
+    },
+    "laugh_fall": {
+      "weight": 2,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 120000,
+      "sha256": {}
+    },
+    "loading_brain": {
+      "weight": 3,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 60000,
+      "sha256": {}
+    },
+    "freeze": {
+      "weight": 2,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 90000,
+      "sha256": {}
+    },
+    "wobble": {
+      "weight": 5,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": true,
+      "allowManual": true,
+      "cooldownMillis": 15000,
+      "sha256": {}
+    },
+    "sit": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": false,
+      "allowManual": false,
+      "sha256": {}
+    },
+    "sleep": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": false,
+      "allowManual": false,
+      "sha256": {}
+    },
+    "look_around": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": false,
+      "allowManual": false,
+      "sha256": {}
+    },
+    "angry": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": false,
+      "allowManual": false,
+      "sha256": {}
+    },
+    "tap_react": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": false,
+      "allowManual": false,
+      "sha256": {}
+    },
+    "surprised": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": false,
+      "allowManual": false,
+      "sha256": {}
+    },
+    "cry": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": false,
+      "allowManual": false,
+      "sha256": {}
+    },
+    "drink": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": false,
+      "allowManual": false,
+      "sha256": {}
+    },
+    "belly_drum": {
+      "weight": 0,
+      "materialStatus": "missing",
+      "qualityApproved": false,
+      "allowAutomatic": false,
+      "allowManual": true,
+      "cooldownMillis": 550,
+      "sha256": {}
+    }
+  }
+}

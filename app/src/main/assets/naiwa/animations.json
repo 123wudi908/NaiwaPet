@@ -1,0 +1,242 @@
+{
+  "placeholder": false,
+  "canvas": {
+    "width": 640,
+    "height": 640
+  },
+  "contentBounds": {
+    "left": 0,
+    "top": 0,
+    "right": 640,
+    "bottom": 640
+  },
+  "referenceHeight": 480,
+  "actions": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "temporary": false,
+      "frameDurationsMillis": [
+        450,
+        350,
+        450,
+        350,
+        400,
+        500
+      ],
+      "interruptible": true,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "blink": {
+      "fps": 8,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        80,
+        55,
+        90,
+        65,
+        55,
+        120
+      ],
+      "interruptible": true,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "wave": {
+      "fps": 8,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        150,
+        110,
+        180,
+        180,
+        110,
+        200
+      ],
+      "interruptible": true,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "happy": {
+      "fps": 8,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        130,
+        120,
+        140,
+        180,
+        140,
+        200
+      ],
+      "interruptible": true,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "walk": {
+      "fps": 8,
+      "loop": true,
+      "temporary": false,
+      "frameDurationsMillis": [
+        125,
+        125,
+        125,
+        125,
+        125,
+        125
+      ],
+      "interruptible": true,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "think": {
+      "fps": 8,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        180,
+        180,
+        380,
+        380,
+        180,
+        200
+      ],
+      "interruptible": true,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "laugh": {
+      "fps": 8,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        180,
+        180,
+        300,
+        200,
+        240,
+        280,
+        180,
+        220
+      ],
+      "interruptible": true,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "dance": {
+      "fps": 8,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        160,
+        200,
+        220,
+        220,
+        200,
+        180
+      ],
+      "interruptible": false,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "fake_fall": {
+      "fps": 8,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        180,
+        220,
+        160,
+        650,
+        240,
+        220
+      ],
+      "interruptible": false,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "laugh_fall": {
+      "fps": 8,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        160,
+        240,
+        220,
+        180,
+        160,
+        220
+      ],
+      "interruptible": false,
+      "lastFrameHoldMillis": 800,
+      "returnTo": "idle"
+    },
+    "loading_brain": {
+      "fps": 8,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        180,
+        300,
+        380,
+        320,
+        220,
+        220
+      ],
+      "interruptible": true,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "freeze": {
+      "fps": 8,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        180,
+        120,
+        700,
+        500,
+        180,
+        220
+      ],
+      "interruptible": false,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "wobble": {
+      "fps": 8,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        140,
+        170,
+        180,
+        170,
+        180,
+        200
+      ],
+      "interruptible": true,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    },
+    "belly_drum": {
+      "fps": 12,
+      "loop": false,
+      "temporary": false,
+      "frameDurationsMillis": [
+        90,
+        70,
+        70,
+        90,
+        70,
+        110
+      ],
+      "interruptible": true,
+      "lastFrameHoldMillis": 0,
+      "returnTo": "idle"
+    }
+  }
+}

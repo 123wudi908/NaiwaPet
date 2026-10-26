@@ -1,0 +1,55 @@
+name: Android Source Verification
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6.1.0
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4.0.4
+      - name: Verify source-only publication
+        run: node scripts/verify-public-source.mjs
+      - name: Install fixed Android SDK packages
+        run: |
+          mkdir -p build/logs
+          set -o pipefail
+          sdkmanager 'platforms;android-37.0' 'build-tools;36.0.0' 'platform-tools' 2>&1 | tee build/logs/sdk.log
+      - name: Validate Gradle wrapper
+        run: |
+          set -o pipefail
+          curl --fail --silent --show-error --location https://services.gradle.org/distributions/gradle-9.6.0-wrapper.jar.sha256 -o build/logs/wrapper.sha256
+          printf '%s  gradle/wrapper/gradle-wrapper.jar\n' "$(cat build/logs/wrapper.sha256)" | sha256sum --check
+          chmod +x gradlew
+      - name: Test, lint and build internally
+        run: |
+          set -o pipefail
+          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --stacktrace --console=plain 2>&1 | tee build/logs/gradle.log
+      - name: Preserve diagnostics only
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: android-source-diagnostics
+          path: |
+            build/logs/
+            app/build/reports/
+            app/build/test-results/
+          if-no-files-found: warn
+          retention-days: 14
