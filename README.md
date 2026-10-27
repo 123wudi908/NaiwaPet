@@ -1,6 +1,6 @@
 # NaiwaPet · 奶蛙 Android 桌宠
 
-原生 Kotlin / Android View / WindowManager 桌宠项目。当前代码版本为 `0.5.0-personal`，`versionCode = 5`，包名为 `com.naiwa.androidpet`。
+原生 Kotlin / Android View / WindowManager 桌宠项目。当前代码版本为 `0.6.0-personal`，`versionCode = 6`，包名为 `com.naiwa.androidpet`。
 
 仓库包含原生 Android 源码、构建配置及 **14 组、86 帧透明 PNG 动作**。原始参考图、视频、生成过程稿、历史备份、签名私钥和 APK 不随仓库提供。
 
@@ -11,6 +11,7 @@
 - 本地心情、精力、亲密度、互动记录及成就。
 - 打鼓、连击挑战、接奶泡三个小游戏。
 - 锁屏暂停、平台服务恢复、有限窗口恢复与本地诊断。
+- GitHub 正式 Release 检查、首页提示、更新详情、可取消下载、签名校验及系统安装引导。
 
 已恢复正式动作的动画参数、已审查指纹和应用图标；其余 10 项没有合格素材的动作继续禁用。应用逻辑和单元测试保留自原项目。
 
@@ -18,7 +19,7 @@
 
 ## 构建
 
-需要 JDK 17、Android SDK Platform 37、Build Tools 36.0.0；Gradle 9.6.0 / Android Gradle Plugin 9.4.1 已固定在工程中。最低 Android 8.0（API 26）。
+需要 JDK 17、Android SDK Platform 37、Build Tools 36.0.0；Gradle 9.6.0 / Android Gradle Plugin 9.4.1 已固定在工程中。最低 Android 8.0（API 26）。更新清单工具及其测试使用 Python 3，仅依赖标准库。
 
 使用 Android Studio 打开仓库根目录，配置自己的 Android SDK，或执行：
 
@@ -28,7 +29,7 @@
 
 Windows 使用 `gradlew.bat`。SDK 路径放在本机 `local.properties`，不要提交该文件。
 
-GitHub Actions 检查提交范围、86 帧指纹、PNG 完整性与透明背景，并执行单元测试、Lint 和内部 Debug 构建；只保存诊断报告，不上传 APK，不发布 Release。原生验收探针需连接设备或模拟器另行运行，不能把构建通过等同于所有真机运行验证。
+GitHub Actions 检查提交范围、86 帧指纹、PNG 完整性与透明背景，并执行更新清单工具测试、Android 单元测试、Lint 和内部 Debug 构建；只保存诊断报告，不上传 APK，不发布 Release。原生验收探针需连接设备或模拟器另行运行，不能把构建通过等同于所有真机运行验证。
 
 ## 素材
 
@@ -36,10 +37,10 @@ GitHub Actions 检查提交范围、86 帧指纹、PNG 完整性与透明背景�
 
 ## 版本与更新
 
-目前尚未实现应用内检查更新。当前构建仍采用 Android Debug 签名，没有正式发布签名或 Release。
+应用内更新已接入本仓库的 GitHub Releases，排除草稿和预发布版本，按 `versionCode` 比较版本。首次启动会检查更新，周期自动检查和更新通知默认关闭；用户可在设置中手动检查或开启它们。检查、下载和安装均由用户控制，不强制更新。
 
-后续更新设计见 [更新准备说明](docs/UPDATES.md)。正式发布前需要完成更新功能、长期签名与版本管理，并重新验证素材分发范围。
+正式 Release 需提供 APK、签名更新清单和签名文件。客户端验证清单签名、APK 摘要、包名、版本与签名身份，再交由系统安装器确认。Release 签名通过四项 `NAIWA_RELEASE_*` 环境变量配置，缺少配置时禁止 Release 打包，密钥和密码不随源码提供。Debug 安装与不同证书的正式版本不能按当前流程直接覆盖升级。配置、发布资产及平台限制见 [版本与更新说明](docs/UPDATES.md)。源码版本不代表已发布可下载 APK，实际状态以正式 Release 和验签结果为准。
 
 ## 许可与范围
 
-本仓库尚未指定项目级开源许可证；公开可见不等于授予任意复制、修改或再分发许可。图片来源通知与代码许可分别适用，不将素材标注为 MIT 或商业图包。第三方构建工具的许可独立适用，见 [第三方说明](THIRD_PARTY_NOTICES.md)。
+本仓库尚未指定项目级开源许可证；公开可见不等于授予任意复制、修改或再分发许可。图片来源通知与代码许可分别适用，不将素材标注为 MIT 或商业图包。第三方依赖和构建工具的许可独立适用，见 [第三方说明](THIRD_PARTY_NOTICES.md)。
