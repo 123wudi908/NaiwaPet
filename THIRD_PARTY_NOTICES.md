@@ -1,7 +1,8 @@
-# 第三方构建与测试工具
+# 第三方库、构建与测试工具
 
-本仓库没有新增第三方生产库。以下工具或测试依赖的许可独立于应用代码及角色素材：
+以下依赖和工具的许可独立于应用代码及角色素材：
 
+- Gson 2.11.0：用于解析 GitHub Release 和签名更新清单的 JSON，采用 Apache License 2.0，参见 [Gson 2.11.0 许可文件](https://github.com/google/gson/blob/gson-parent-2.11.0/LICENSE)。通过 Gradle 引用，未将其源码或构建缓存复制到仓库。
 - Gradle Wrapper / Gradle：由 Gradle 项目提供，参见 [Gradle 的许可文件](https://github.com/gradle/gradle/blob/master/LICENSE)。Wrapper JAR 是构建启动器，不是角色素材。
 - Android Gradle Plugin、Android SDK 和 Java：由相应供应方发布，使用前按其许可配置本地环境；不随本仓库再分发 SDK 或 JDK。
 - JUnit 4.13.2：仅用于单元测试，参见 [JUnit 许可文件](https://github.com/junit-team/junit4/blob/main/LICENSE-junit.txt)。

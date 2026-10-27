@@ -17,8 +17,10 @@ import com.naiwa.androidpet.overlay.*
 class LifecycleProbe : Instrumentation() {
     private val failures=mutableListOf<String>()
     private var passed=0
-    override fun onCreate(arguments:Bundle?){super.onCreate(arguments);start()}
+    private var updateOnly=false
+    override fun onCreate(arguments:Bundle?){super.onCreate(arguments);updateOnly=arguments?.getString("updateOnly")=="true";start()}
     override fun onStart(){
+        if(updateOnly){UpdateProbe(this).run();return}
         try{
             com.naiwa.androidpet.runtime.PetDiagnostics.initialize(targetContext)
             check(Settings.canDrawOverlays(targetContext)){"Grant the isolated test app overlay permission first"}

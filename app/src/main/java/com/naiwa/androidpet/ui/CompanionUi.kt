@@ -17,6 +17,7 @@ import com.naiwa.androidpet.companion.*
 import com.naiwa.androidpet.data.*
 import com.naiwa.androidpet.game.*
 import com.naiwa.androidpet.runtime.*
+import com.naiwa.androidpet.update.UpdateManager
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -26,13 +27,16 @@ enum class AppPage(val title: String, val subtitle: String) {
     ACTIONS("动作图鉴","见过的表情，都收在这里。"),
     PLAY("游乐场","一局小游戏，一点好心情。"),
     CARE("一起长大","每一次互动，奶蛙都记得。"),
-    SETTINGS("设置","按你的习惯来。")
+    SETTINGS("设置","按你的习惯来。"),
+    UPDATE("更新详情","看看奶蛙带来了什么。")
 }
 
 /** Native screens share the actual service settings, approved materials and local memory. */
 class CompanionUi(private val activity: Activity, private val preferences: PetPreferences,
     private val startPet: () -> Unit, private val stopPet: () -> Unit, private val controls: () -> Unit,
     private val overlaySettings: () -> Unit, private val notificationSettings: () -> Unit,
+    private val updateNotificationToggle: (Boolean) -> Unit, private val openProject: () -> Unit,
+    private val installUpdate: () -> Unit,
     private val export: (String,String) -> Unit, initialPage: String? = null) {
     private val memory = PetStateRepository.get(activity)
     private val sound = FeedbackPlayer(activity)
@@ -57,6 +61,10 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
     private var refreshingControls=false
     private var sizeSlider:SeekBar?=null
     private var resizing=false
+    private var updateRegion: LinearLayout? = null
+    private val updates = UpdateManager.get(activity)
+    private val updateUi = UpdateUi(activity, updates, { show(AppPage.UPDATE) }, { show(AppPage.SETTINGS) },
+        updateNotificationToggle, notificationSettings, openProject, installUpdate)
 
     init {
         header.orientation=LinearLayout.HORIZONTAL;header.gravity=Gravity.CENTER_VERTICAL
@@ -71,7 +79,7 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
 
     fun show(page: AppPage) { this.page=page;render() }
     private fun render() {
-        preview?.close();preview=null;values.clear();discoveries.clear();toggles.clear();sizeSlider=null
+        preview?.close();preview=null;values.clear();discoveries.clear();toggles.clear();sizeSlider=null;updateRegion=null
         startButton=null;controlsButton=null;bubble=null;currentAction=null;sizeLabel=null
         body.removeAllViews();header.removeAllViews();navigation.removeAllViews()
         val compactHeader=activity.resources.configuration.fontScale>=1.5f ||
@@ -81,9 +89,10 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
         titleBlock.addView(NativeStyle.text(activity,page.title,if(compactHeader)22f else 26f,true).apply{setPadding(0,0,0,0)})
         if(!compactHeader)titleBlock.addView(NativeStyle.text(activity,page.subtitle,13f).apply{setPadding(0,dp(4),0,0)})
         header.addView(titleBlock,LinearLayout.LayoutParams(0,-2,1f))
-        header.addView(iconButton(if (page == AppPage.SETTINGS) IconKind.BACK else IconKind.SETTINGS,
-            if (page == AppPage.SETTINGS) "返回奶蛙之家" else "设置") {
-            show(if (page == AppPage.SETTINGS) AppPage.HOME else AppPage.SETTINGS)
+        val back = page == AppPage.SETTINGS || page == AppPage.UPDATE
+        header.addView(iconButton(if (back) IconKind.BACK else IconKind.SETTINGS,
+            if (page == AppPage.UPDATE) "返回设置" else if (back) "返回奶蛙之家" else "设置") {
+            show(if (page == AppPage.UPDATE) AppPage.SETTINGS else if (back) AppPage.HOME else AppPage.SETTINGS)
         },LinearLayout.LayoutParams(dp(48),dp(48)))
         when (page) {
             AppPage.HOME -> home()
@@ -91,6 +100,7 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
             AppPage.PLAY -> games()
             AppPage.CARE -> care()
             AppPage.SETTINGS -> settings()
+            AppPage.UPDATE -> updatePage()
         }
         for ((destination,label,kind) in listOf(Triple(AppPage.HOME,"家",IconKind.HOME),
             Triple(AppPage.ACTIONS,"图鉴",IconKind.BOOK),Triple(AppPage.PLAY,"游戏",IconKind.PLAY),
@@ -114,6 +124,8 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
     }
 
     private fun home() {
+        updateRegion=LinearLayout(activity).apply { orientation=LinearLayout.VERTICAL;body.addView(this) }
+        refreshUpdate()
         bind("homeDiagnostic",text("",13f).apply{
             setPadding(dp(12),dp(10),dp(12),dp(10))
             background=NativeStyle.surface(activity,NativeStyle.softGreen)
@@ -202,6 +214,8 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
     }
 
     private fun settings() {
+        updateRegion=LinearLayout(activity).apply { orientation=LinearLayout.VERTICAL;body.addView(this) }
+        refreshUpdate()
         section("陪伴方式")
         toggle("自动行为","空闲时眨眼、挥手，偶尔调皮一下。",preferences.automaticBehaviorEnabled(true)) { preferences.setAutomaticBehavior(it) }
         toggle("自动移动","在安全区域左右走；触摸和打开面板时暂停。",preferences.automaticMovementEnabled(false)) { preferences.setAutomaticMovement(it) }
@@ -241,6 +255,22 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
         text("版本 $version · 本地保存 · 无需账号",13f)
         text("以你的参考形象制作的个人使用动作。新增姿势是参考衍生；未获准动作不会混入正式图鉴。",12f)
         text("系统可能限制悬浮层或后台服务。若手机限制后台运行，可在系统的应用与电池设置中查看。",12f)
+    }
+
+    private fun updatePage() {
+        updateRegion=LinearLayout(activity).apply { orientation=LinearLayout.VERTICAL;body.addView(this) }
+        refreshUpdate()
+    }
+
+    fun refreshUpdate() {
+        val region=updateRegion ?: return
+        region.removeAllViews()
+        when(page) {
+            AppPage.HOME -> updateUi.home(region)
+            AppPage.SETTINGS -> updateUi.settings(region)
+            AppPage.UPDATE -> updateUi.details(region)
+            else -> Unit
+        }
     }
 
     private fun statStrip() {

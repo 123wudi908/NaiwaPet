@@ -30,6 +30,8 @@ jobs:
           node scripts/verify-public-source.mjs
           node scripts/verify-assets.mjs
           node scripts/verify-behavior.mjs
+      - name: Test update metadata tooling
+        run: python3 -B -m unittest scripts.test_update_metadata -v
       - name: Install fixed Android SDK packages
         run: |
           mkdir -p build/logs

@@ -15,6 +15,7 @@ import com.naiwa.androidpet.data.*
 import com.naiwa.androidpet.runtime.*
 import com.naiwa.androidpet.ui.CompanionUi
 import com.naiwa.androidpet.ui.AppPage
+import com.naiwa.androidpet.update.UpdateManager
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
 
@@ -23,6 +24,7 @@ class MainActivity : Activity() {
     private lateinit var preferences: PetPreferences
     private lateinit var ui: CompanionUi
     private lateinit var memory: PetStateRepository
+    private lateinit var updates: UpdateManager
     private val handler=Handler(Looper.getMainLooper())
     private val screenKey="main-${System.identityHashCode(this)}"
     private var resumed=false
@@ -33,11 +35,12 @@ class MainActivity : Activity() {
     private var pendingExport: String?=null
     private var backCallback:OnBackInvokedCallback?=null
     private val statusListener: () -> Unit = { if(::ui.isInitialized)ui.refresh() }
+    private val updateListener: () -> Unit = { if(::ui.isInitialized)ui.refreshUpdate() }
     private val preferenceListener=SharedPreferences.OnSharedPreferenceChangeListener { _,_ -> statusListener() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        PetDiagnostics.initialize(this);preferences=PetPreferences(this);memory=PetStateRepository.get(this)
+        PetDiagnostics.initialize(this);preferences=PetPreferences(this);memory=PetStateRepository.get(this);updates=UpdateManager.get(this)
         pendingStart=savedInstanceState?.getBoolean("pendingStart") ?: false
         awaitingOverlay=savedInstanceState?.getBoolean("awaitingOverlay") ?: false
         awaitingNotification=savedInstanceState?.getBoolean("awaitingNotification") ?: false
@@ -61,23 +64,29 @@ class MainActivity : Activity() {
             },
             overlaySettings={openOverlaySettings(false)},
             notificationSettings={openSettings(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,packageName))},
-            export=::exportDocument,initialPage=savedInstanceState?.getString("page"))
+            updateNotificationToggle=::setUpdateNotifications,
+            openProject={openSettings(Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/123wudi908/NaiwaPet")))},
+            installUpdate=::installUpdate,
+            export=::exportDocument,initialPage=intent?.getStringExtra("page") ?: savedInstanceState?.getString("page"))
+        intent?.removeExtra("page")
         if(Build.VERSION.SDK_INT>=33){
             backCallback=OnBackInvokedCallback{goBack()}
             onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT,checkNotNull(backCallback))
         }
     }
     override fun onStart() {
-        super.onStart();PetRuntime.subscribe(statusListener);memory.subscribe(statusListener);preferences.listen(preferenceListener)
+        super.onStart();PetRuntime.subscribe(statusListener);memory.subscribe(statusListener);preferences.listen(preferenceListener);updates.subscribe(updateListener)
         PetRuntime.screenVisible(screenKey,true)
+        updates.start()
     }
     override fun onNewIntent(intent:Intent){
         super.onNewIntent(intent);setIntent(intent)
         AppPage.entries.firstOrNull{it.name==intent.getStringExtra("page")}?.let(ui::show)
+        intent.removeExtra("page")
     }
     override fun onStop() {
         PetRuntime.screenVisible(screenKey,false);PetRuntime.unsubscribe(statusListener);memory.unsubscribe(statusListener)
-        preferences.unlisten(preferenceListener);super.onStop()
+        preferences.unlisten(preferenceListener);updates.unsubscribe(updateListener);super.onStop()
     }
     override fun onPause(){resumed=false;ui.setActive(false);super.onPause()}
     override fun onResume(){
@@ -90,6 +99,7 @@ class MainActivity : Activity() {
             if(!Settings.canDrawOverlays(this)){pendingStart=false;report(getString(R.string.overlay_denied_message))}
         }
         if(pendingStart && !awaitingNotification)continueStart()
+        ui.refreshUpdate()
     }
     private fun continueStart(){
         when(PermissionPolicy.decide(Settings.canDrawOverlays(this),resumed)){
@@ -119,6 +129,31 @@ class MainActivity : Activity() {
     override fun onRequestPermissionsResult(requestCode:Int,permissions:Array<out String>,grantResults:IntArray){
         super.onRequestPermissionsResult(requestCode,permissions,grantResults)
         if(requestCode==NOTIFICATION_REQUEST){awaitingNotification=false;if(pendingStart && resumed)continueStart();ui.refresh()}
+        if(requestCode==UPDATE_NOTIFICATION_REQUEST)ui.refreshUpdate()
+    }
+    private fun setUpdateNotifications(enabled:Boolean){
+        updates.setNotifications(enabled)
+        if(enabled && Build.VERSION.SDK_INT>=33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS),UPDATE_NOTIFICATION_REQUEST)
+    }
+    @Suppress("DEPRECATION") // The platform installer returns whether the user confirmed or cancelled on API26+.
+    private fun installUpdate(){
+        updates.validateForInstall { error ->
+            if(error!=null){updates.setInstallFeedback(error);return@validateForInstall}
+            if(!resumed){updates.setInstallFeedback("请返回更新详情，再点击安装。");return@validateForInstall}
+            if(!packageManager.canRequestPackageInstalls()){
+                updates.setInstallFeedback("请先在系统设置中允许此应用安装更新，返回后再点击安装。")
+                openSettings(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:$packageName")))
+                return@validateForInstall
+            }
+            val uri=Uri.Builder().scheme("content").authority("$packageName.updates").appendPath("update.apk").build()
+            try{
+                val intent=Intent(Intent.ACTION_INSTALL_PACKAGE).setDataAndType(uri,"application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION).putExtra(Intent.EXTRA_RETURN_RESULT,true)
+                startActivityForResult(intent,INSTALL_REQUEST)
+            }catch(_:ActivityNotFoundException){updates.setInstallFeedback("系统安装器不可用。")}
+            catch(_:SecurityException){updates.setInstallFeedback("系统未允许打开安装器，请检查安装权限。")}
+        }
     }
     private fun exportDocument(name:String,content:String){
         pendingExport=content
@@ -130,6 +165,10 @@ class MainActivity : Activity() {
     @Deprecated("Uses Android's document picker result for the API26 compatibility floor")
     override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){
         super.onActivityResult(requestCode,resultCode,data)
+        if(requestCode==INSTALL_REQUEST){
+            updates.setInstallFeedback(if(resultCode==RESULT_OK)"已交由系统安装。" else "安装已取消，可稍后再试。")
+            return
+        }
         if(requestCode!=EXPORT_REQUEST)return
         val text=pendingExport;pendingExport=null
         if(resultCode!=RESULT_OK || data?.data==null || text==null)return
@@ -144,7 +183,7 @@ class MainActivity : Activity() {
         outState.putBoolean("awaitingNotification",awaitingNotification);outState.putBoolean("notificationStepDone",notificationStepDone)
         outState.putString("page",ui.page.name);outState.putString("pendingExport",pendingExport);super.onSaveInstanceState(outState)
     }
-    private fun goBack(){if(ui.page!=AppPage.HOME)ui.show(AppPage.HOME) else finish()}
+    private fun goBack(){when(ui.page){AppPage.UPDATE->ui.show(AppPage.SETTINGS);AppPage.HOME->finish();else->ui.show(AppPage.HOME)}}
     @Deprecated("Legacy Android back dispatch")
     @android.annotation.SuppressLint("GestureBackNavigation") // API33+ uses the guarded platform callback; API26–32 uses this fallback.
     override fun onBackPressed(){goBack()}
@@ -152,5 +191,5 @@ class MainActivity : Activity() {
         if(Build.VERSION.SDK_INT>=33)backCallback?.let(onBackInvokedDispatcher::unregisterOnBackInvokedCallback)
         handler.removeCallbacksAndMessages(null);ui.close();super.onDestroy()
     }
-    companion object{private const val NOTIFICATION_REQUEST=200;private const val EXPORT_REQUEST=201}
+    companion object{private const val NOTIFICATION_REQUEST=200;private const val EXPORT_REQUEST=201;private const val UPDATE_NOTIFICATION_REQUEST=202;private const val INSTALL_REQUEST=203}
 }
