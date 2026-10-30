@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.app.NotificationManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.BitmapFactory
 import android.graphics.drawable.RippleDrawable
 import android.os.Build
 import android.provider.Settings
@@ -16,6 +17,7 @@ import com.naiwa.androidpet.animation.*
 import com.naiwa.androidpet.companion.*
 import com.naiwa.androidpet.data.*
 import com.naiwa.androidpet.game.*
+import com.naiwa.androidpet.overlay.PetFrameView
 import com.naiwa.androidpet.runtime.*
 import com.naiwa.androidpet.update.UpdateManager
 import java.text.SimpleDateFormat
@@ -48,15 +50,15 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
     var page: AppPage = AppPage.entries.firstOrNull { it.name == initialPage } ?: AppPage.HOME
         private set
     private var preview: PetPreview? = null
+    private var actionDialog: AlertDialog? = null
+    private val scrollPositions = mutableMapOf<AppPage,Int>()
     private var active = false
     private val values = mutableMapOf<String,TextView>()
-    private val discoveries = mutableMapOf<PetAction,TextView>()
     private var startButton: Button? = null
     private var controlsButton: Button? = null
     private var bubble: TextView? = null
     private var currentAction: TextView? = null
     private var sizeLabel: TextView? = null
-    private var selectedAction: PetAction = PetAction.IDLE
     private val toggles=mutableMapOf<String,Switch>()
     private var refreshingControls=false
     private var sizeSlider:SeekBar?=null
@@ -77,9 +79,13 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
         render()
     }
 
-    fun show(page: AppPage) { this.page=page;render() }
+    fun show(page: AppPage) {
+        scrollPositions[this.page]=scroll.scrollY
+        this.page=page;render()
+    }
     private fun render() {
-        preview?.close();preview=null;values.clear();discoveries.clear();toggles.clear();sizeSlider=null;updateRegion=null
+        actionDialog?.dismiss();actionDialog=null
+        preview?.close();preview=null;values.clear();toggles.clear();sizeSlider=null;updateRegion=null
         startButton=null;controlsButton=null;bubble=null;currentAction=null;sizeLabel=null
         body.removeAllViews();header.removeAllViews();navigation.removeAllViews()
         val compactHeader=activity.resources.configuration.fontScale>=1.5f ||
@@ -89,7 +95,10 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
         titleBlock.addView(NativeStyle.text(activity,page.title,if(compactHeader)22f else 26f,true).apply{setPadding(0,0,0,0)})
         if(!compactHeader)titleBlock.addView(NativeStyle.text(activity,page.subtitle,13f).apply{setPadding(0,dp(4),0,0)})
         header.addView(titleBlock,LinearLayout.LayoutParams(0,-2,1f))
-        val back = page == AppPage.SETTINGS || page == AppPage.UPDATE
+        if(page==AppPage.HOME)header.addView(iconButton(IconKind.BOOK,"动作图鉴") {
+            show(AppPage.ACTIONS)
+        },LinearLayout.LayoutParams(dp(48),dp(48)).apply { marginEnd=dp(8) })
+        val back = page == AppPage.SETTINGS || page == AppPage.UPDATE || page == AppPage.ACTIONS
         header.addView(iconButton(if (back) IconKind.BACK else IconKind.SETTINGS,
             if (page == AppPage.UPDATE) "返回设置" else if (back) "返回奶蛙之家" else "设置") {
             show(if (page == AppPage.UPDATE) AppPage.SETTINGS else if (back) AppPage.HOME else AppPage.SETTINGS)
@@ -103,7 +112,7 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
             AppPage.UPDATE -> updatePage()
         }
         for ((destination,label,kind) in listOf(Triple(AppPage.HOME,"家",IconKind.HOME),
-            Triple(AppPage.ACTIONS,"图鉴",IconKind.BOOK),Triple(AppPage.PLAY,"游戏",IconKind.PLAY),
+            Triple(AppPage.PLAY,"游戏",IconKind.PLAY),
             Triple(AppPage.CARE,"养成",IconKind.HEART))) {
             val selected = page == destination
             val item = LinearLayout(activity).apply {
@@ -120,7 +129,9 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
             }
             navigation.addView(item,LinearLayout.LayoutParams(0,-2,1f).apply { marginStart=dp(3);marginEnd=dp(3) })
         }
-        refresh();scroll.post { scroll.scrollTo(0,0) }
+        refresh()
+        val renderedPage=page
+        scroll.post { if(page==renderedPage)scroll.scrollTo(0,scrollPositions[renderedPage] ?: 0) }
     }
 
     private fun home() {
@@ -156,28 +167,65 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
     private fun actions() {
         val materials=PetMaterials.load(activity)
         val available=PetAction.entries.filter(materials.pool::canManualFormal)
-        text("已收录 ${available.size} 个动作。轻点条目看预览，第一次见到会记入图鉴。",14f)
-        val pet=newPreview { message -> bubble?.text=message }
-        body.addView(pet,LinearLayout.LayoutParams(-1,dp(230)))
-        bubble=NativeStyle.text(activity,"选一个动作，看看它会做什么。",13f).also { body.addView(it) }
-        currentAction=text("当前预览：待机",17f,true)
-        pet.stateListener={ currentAction?.text=activity.getString(R.string.gallery_action_now,activity.getString(it.action?.labelResource() ?: R.string.action_idle)) }
+        text("${available.size} 个动作 · 轻点播放",14f)
         for ((group,title) in listOf(ActionGroup.BASIC to "基础动作",ActionGroup.FUNNY to "调皮时刻",ActionGroup.EXTENSION to "更多动作")) {
             val actions=available.filter { it.group == group };if(actions.isEmpty())continue
             section(title)
             actions.forEach { action ->
                 val name=activity.getString(action.labelResource())
-                val label=menuRow(name,actionDescription(action),"预览$name") {
-                    selectedAction=action;scroll.smoothScrollTo(0,0);pet.play(action);refresh()
+                val row=LinearLayout(activity).apply {
+                    orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL;minimumHeight=dp(88)
+                    setPadding(dp(8),dp(8),dp(12),dp(8));isClickable=true;isFocusable=true
+                    contentDescription="播放$name，${actionDescription(action)}"
+                    background=RippleDrawable(ColorStateList.valueOf(0x22516E46),
+                        NativeStyle.surface(activity,Color.WHITE,NativeStyle.Radius.card),null)
+                    setOnClickListener { showActionPreview(action) }
                 }
-                discoveries[action]=label
+                val path=materials.catalog.clips.getValue(action).frames.first()
+                val thumbnail=PetFrameView(activity).apply {
+                    isClickable=false;importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                    val image=activity.assets.open(path).use {
+                        BitmapFactory.decodeStream(it,null,BitmapFactory.Options().apply { inSampleSize=4 })
+                    }
+                    val layout=materials.catalog.frameLayouts[path] ?: materials.catalog.layout
+                    if(image!=null)setFrame(image,layout.renderOffsetX.toFloat()/layout.contentWidth,
+                        layout.renderOffsetY.toFloat()/layout.contentHeight)
+                }
+                row.addView(thumbnail,LinearLayout.LayoutParams(dp(64),dp(64)).apply { marginEnd=dp(12) })
+                val words=LinearLayout(activity).apply { orientation=LinearLayout.VERTICAL }
+                words.addView(NativeStyle.text(activity,name,16f,true).apply { setPadding(0,0,0,dp(4)) })
+                words.addView(NativeStyle.text(activity,actionDescription(action),12f).apply { setPadding(0,0,0,0) })
+                row.addView(words,LinearLayout.LayoutParams(0,-2,1f))
+                row.addView(UiIcon(activity,IconKind.BACK,NativeStyle.accent).apply { rotation=180f },
+                    LinearLayout.LayoutParams(dp(16),dp(16)).apply { marginStart=dp(8) })
+                body.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(8) })
             }
         }
-        val missing=PetAction.entries.filterNot { it in available }
-        if(missing.isNotEmpty()) {
-            section("还没收录的动作")
-            text("${missing.size} 项缺少合格独立素材，暂不开放："+missing.joinToString("、") { activity.getString(it.labelResource()) }+"。",13f)
+    }
+
+    private fun showActionPreview(action:PetAction) {
+        actionDialog?.dismiss()
+        val panel=LinearLayout(activity).apply {
+            orientation=LinearLayout.VERTICAL;setPadding(dp(20),dp(8),dp(20),dp(16))
         }
+        val player=PetPreview(activity,interactive=false)
+        preview=player;player.setActive(active)
+        val status=NativeStyle.text(activity,actionDescription(action),13f).apply {
+            gravity=Gravity.CENTER;accessibilityLiveRegion=View.ACCESSIBILITY_LIVE_REGION_POLITE
+        }
+        player.stateListener={ status.text=activity.getString(R.string.gallery_action_now,
+            activity.getString(it.action?.labelResource() ?: R.string.action_idle)) }
+        panel.addView(player,LinearLayout.LayoutParams(-1,minOf(dp(260),(activity.resources.displayMetrics.heightPixels*.34f).toInt())))
+        panel.addView(status)
+        panel.addView(NativeStyle.button(activity,"再播放一次",true) { player.play(action) })
+        val dialog=AlertDialog.Builder(activity).setTitle(activity.getString(action.labelResource()))
+            .setView(panel).setNegativeButton("关闭",null).create()
+        dialog.setOnDismissListener {
+            player.close()
+            if(preview===player)preview=null
+            if(actionDialog===dialog)actionDialog=null
+        }
+        actionDialog=dialog;dialog.show();player.play(action)
     }
 
     private fun games() {
@@ -250,10 +298,7 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
         button("关闭桌宠") { stopPet() }
         bind("diagnostic",text("",13f))
         section("关于奶蛙")
-        @Suppress("DEPRECATION")
-        val version=activity.packageManager.getPackageInfo(activity.packageName,0).versionName
-        text("版本 $version · 本地保存 · 无需账号",13f)
-        text("以你的参考形象制作的个人使用动作。新增姿势是参考衍生；未获准动作不会混入正式图鉴。",12f)
+        text("数据保存在本机 · 无需账号",13f)
         text("系统可能限制悬浮层或后台服务。若手机限制后台运行，可在系统的应用与电池设置中查看。",12f)
     }
 
@@ -318,9 +363,6 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
             if(key=="homeDiagnostic")label.visibility=if(diagnostic.isNullOrBlank())View.GONE else View.VISIBLE
             if(key.startsWith("achievement."))label.setTextColor(if(key.removePrefix("achievement.") in s.achievements)NativeStyle.accent else NativeStyle.secondary)
         }
-        discoveries.forEach { (action,label) ->
-            label.text=activity.getString(R.string.unlocked_action_description,if(action.directory in s.unlockedActions)"已见过" else "还没见过",actionDescription(action))
-        }
         startButton?.text=if(PetRuntime.running)"关闭桌宠" else "开启桌宠"
         startButton?.isSelected=PetRuntime.running
         controlsButton?.isEnabled=PetRuntime.running
@@ -336,7 +378,7 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
         }finally{refreshingControls=false}
     }
     fun setActive(value:Boolean){active=value;preview?.setActive(value);if(value){preview?.refreshSettings();refresh()}}
-    fun close(){preview?.close();preview=null;sound.close()}
+    fun close(){actionDialog?.dismiss();actionDialog=null;preview?.close();preview=null;sound.close()}
 
     private fun newPreview(feedback:(String)->Unit):PetPreview=PetPreview(activity,feedback=feedback).also{preview=it;it.setActive(active)}
     private fun text(label:String,size:Float=14f,strong:Boolean=false)=NativeStyle.text(activity,label,size,strong).also{body.addView(it)}

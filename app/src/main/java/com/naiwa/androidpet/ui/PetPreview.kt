@@ -62,10 +62,14 @@ class PetPreview @JvmOverloads constructor(context: Context, private val interac
         val a = animator ?: return false
         if (action != PetAction.WALK) return a.play(action)
         val started = a.gameFeedback(action)
-        if (started) handler.postDelayed({ if (!closed) a.play(PetAction.IDLE) },1400)
+        if (started) handler.postDelayed({ if (!closed) a.finishPreviewWalk() },1400)
         return started
     }
-    fun gameFeedback(action: PetAction): Boolean = animator?.gameFeedback(action) == true
+    fun gameFeedback(action: PetAction): Boolean {
+        val accepted = animator?.gameFeedback(action) == true
+        if (accepted) handler.removeCallbacksAndMessages(null)
+        return accepted
+    }
     fun close() {
         if (closed) return
         closed = true; handler.removeCallbacksAndMessages(null)

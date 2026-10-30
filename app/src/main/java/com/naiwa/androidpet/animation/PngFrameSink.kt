@@ -49,7 +49,7 @@ class PngFrameSink(
             if (closed) return
             ticket = ++generation; target = targetPixels; cached = cache.get(path)
         }
-        if (cached != null) { deliver(ticket, cached, completion); return }
+        if (cached != null) { deliver(ticket, path, cached, completion); return }
         executor.execute {
             val result = try { Result.success(decode(path, target)) }
             catch (error: Exception) { PetDiagnostics.event("frame.decode_failed", path, error); Result.failure(error) }
@@ -61,17 +61,25 @@ class PngFrameSink(
             main.post {
                 if (!isCurrent(ticket)) return@post
                 result.fold(
-                    onSuccess = { view.setFrame(it); completion(Result.success(Unit)) },
+                    onSuccess = { showFrame(path, it); completion(Result.success(Unit)) },
                     onFailure = { completion(Result.failure(it)) },
                 )
             }
         }
     }
 
-    private fun deliver(ticket: Long, bitmap: Bitmap, completion: (Result<Unit>) -> Unit) {
+    private fun deliver(ticket: Long, path: String, bitmap: Bitmap, completion: (Result<Unit>) -> Unit) {
         main.post {
-            if (isCurrent(ticket)) { view.setFrame(bitmap); completion(Result.success(Unit)) }
+            if (isCurrent(ticket)) { showFrame(path, bitmap); completion(Result.success(Unit)) }
         }
+    }
+
+    private fun showFrame(path: String, bitmap: Bitmap) {
+        val placement = frameLayouts[path] ?: layout
+        // Fractions keep source-pixel calibration stable through decoder sampling and View resizing.
+        // Apply on cache hits too, so an unshifted IDLE resets the previous action's placement.
+        view.setFrame(bitmap, placement.renderOffsetX.toFloat() / placement.contentWidth,
+            placement.renderOffsetY.toFloat() / placement.contentHeight)
     }
 
     private fun isCurrent(ticket: Long) = synchronized(lock) { !closed && generation == ticket }

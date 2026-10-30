@@ -18,9 +18,13 @@ class LifecycleProbe : Instrumentation() {
     private val failures=mutableListOf<String>()
     private var passed=0
     private var updateOnly=false
-    override fun onCreate(arguments:Bundle?){super.onCreate(arguments);updateOnly=arguments?.getString("updateOnly")=="true";start()}
+    private var v070Only=false
+    private var frontAudit=false
+    override fun onCreate(arguments:Bundle?){super.onCreate(arguments);updateOnly=arguments?.getString("updateOnly")=="true";v070Only=arguments?.getString("v070Only")=="true";frontAudit=arguments?.getString("frontAudit")=="true";start()}
     override fun onStart(){
         if(updateOnly){UpdateProbe(this).run();return}
+        if(v070Only){V070Probe(this).run();return}
+        if(frontAudit){FrontActionAuditProbe(this).run();return}
         try{
             com.naiwa.androidpet.runtime.PetDiagnostics.initialize(targetContext)
             check(Settings.canDrawOverlays(targetContext)){"Grant the isolated test app overlay permission first"}

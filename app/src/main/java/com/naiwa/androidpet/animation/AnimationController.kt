@@ -54,9 +54,18 @@ class AnimationController(
     clips: Map<PetAction, AnimationClip>,
     private val scheduler: FrameScheduler,
     private val sink: FrameSink,
+    directionalClips: Map<PetDirection, Map<PetAction, AnimationClip>>,
     private val diagnostic: (String) -> Unit,
 ) {
-    private val clips = clips.toMap()
+    constructor(clips: Map<PetAction, AnimationClip>, scheduler: FrameScheduler, sink: FrameSink,
+        diagnostic: (String) -> Unit) : this(clips, scheduler, sink, emptyMap(), diagnostic)
+
+    private val animations = DirectionalAnimationSet(clips, directionalClips)
+    private val facing = DirectionState()
+    private val failedDirectionalClips = mutableSetOf<Pair<PetDirection, PetAction>>()
+    val currentDirection: PetDirection get() = facing.direction
+    var displayedDirection = PetDirection.FRONT
+        private set
     private var clip: AnimationClip? = null
     private var index = 0
     private var generation = 0L
@@ -64,6 +73,8 @@ class AnimationController(
     private var closed = false
     private val failedIdleFrames = mutableSetOf<String>()
     private var motionEnabled = true
+    private var framePresented = false
+    private var walkStopRequested = false
     var isPaused = true
         private set
     val currentAction: PetAction? get() = clip?.action
@@ -88,10 +99,46 @@ class AnimationController(
     fun finishMovement() {
         if (!closed && currentAction == PetAction.WALK &&
             currentOrigin in setOf(ActionOrigin.MOVEMENT, ActionOrigin.MANUAL_MOVEMENT))
-            begin(PetAction.IDLE, ActionOrigin.DEFAULT)
+            finishWalkAtFrameBoundary()
     }
 
-    init { require(this.clips.all { it.key == it.value.action }) }
+    /** The gallery owns a GAME walk; its old timer must not end a newer manual action. */
+    fun finishPreviewWalk() {
+        if (!closed && currentAction == PetAction.WALK && currentOrigin == ActionOrigin.GAME)
+            finishWalkAtFrameBoundary()
+    }
+
+    private fun finishWalkAtFrameBoundary() {
+        // Movement has already stopped. Only the currently visible frame may finish,
+        // never another gait cycle or an outstanding decode that has not reached the screen.
+        if (isPaused) {
+            begin(PetAction.IDLE, ActionOrigin.DEFAULT); pause()
+        } else if (!motionEnabled || !framePresented ||
+            clip?.frames == resolve(PetAction.IDLE, ActionOrigin.DEFAULT)?.clip?.frames) {
+            begin(PetAction.IDLE, ActionOrigin.DEFAULT)
+        } else walkStopRequested = true
+    }
+
+    /** Drag and autonomous movement enter through the same screen-space vector. */
+    fun faceMovement(dx: Double, dy: Double) {
+        if (closed) return
+        val old = currentDirection
+        facing.moveBy(dx, dy)
+        if (old == currentDirection) return
+        val action = currentAction ?: return
+        // One-shot actions keep their original timing, final hold, and interruption rules.
+        if (action != PetAction.IDLE && action != PetAction.WALK) return
+        val next = resolve(action, currentOrigin) ?: return
+        invalidate(); sink.cancelPending()
+        clip = next.clip; displayedDirection = next.direction; index = 0
+        if (!isPaused) render()
+    }
+
+    fun resetDirectionMotion() { facing.resetMotion() }
+
+    private fun resolve(action: PetAction, origin: ActionOrigin): FacingAnimation? =
+        animations.resolve(action, if ((currentDirection to action) in failedDirectionalClips)
+            PetDirection.FRONT else currentDirection, origin)
 
     fun start() { if (!begin(PetAction.IDLE, ActionOrigin.DEFAULT)) pause() }
 
@@ -99,13 +146,16 @@ class AnimationController(
 
     private fun begin(action: PetAction, origin: ActionOrigin): Boolean {
         if (closed) return false
-        val next = clips[action]
+        val next = resolve(action, origin)
         if (next == null) {
             diagnostic("缺少可用 PNG 动作：assets/naiwa/${action.directory}/")
             return false
         }
         invalidate()
-        clip = next; index = 0; isPaused = false; currentOrigin = origin
+        walkStopRequested = false
+        framePresented = false
+        clip = next.clip; displayedDirection = next.direction
+        index = 0; isPaused = false; currentOrigin = origin
         actionListener?.invoke(action)
         render()
         return true
@@ -122,10 +172,17 @@ class AnimationController(
         val epoch = generation
         val path = playing.frames[index]
         val started = scheduler.nowMillis
+        framePresented = false
         sink.present(path) { result ->
             if (closed || isPaused || epoch != generation) return@present
             if (result.isFailure) {
                 diagnostic("PNG 播放失败：assets/$path；${result.exceptionOrNull()?.message ?: "无法解码"}")
+                if (displayedDirection != PetDirection.FRONT) {
+                    // Optional turntable art must never disable the admitted original action.
+                    failedDirectionalClips.add(currentDirection to playing.action)
+                    if (!begin(playing.action, currentOrigin)) pause()
+                    return@present
+                }
                 if (playing.action == PetAction.IDLE) {
                     failedIdleFrames.add(path)
                     val healthy = playing.frames.indices.firstOrNull { playing.frames[it] !in failedIdleFrames }
@@ -137,7 +194,12 @@ class AnimationController(
                 }
                 return@present
             }
+            framePresented = true
             if (!motionEnabled) {
+                if (playing.action == PetAction.WALK && walkStopRequested) {
+                    begin(PetAction.IDLE, ActionOrigin.DEFAULT)
+                    return@present
+                }
                 if (playing.action != PetAction.IDLE && playing.action != PetAction.WALK) {
                     val duration = playing.frames.indices.sumOf(playing::durationAt) +
                         (playing.lastFrameHoldMillis-playing.durationAt(playing.frames.lastIndex)).coerceAtLeast(0)
@@ -150,9 +212,14 @@ class AnimationController(
             val holdingLastFrame = !playing.loop && index == playing.frames.lastIndex && playing.lastFrameHoldMillis > 0
             // Count a final-pose hold from successful presentation, including on a slow decoder.
             val remaining = if (holdingLastFrame) maxOf(playing.durationAt(index), playing.lastFrameHoldMillis)
+                else if (playing.action == PetAction.WALK) playing.durationAt(index)
                 else (playing.durationAt(index) - (scheduler.nowMillis - started)).coerceAtLeast(0)
             scheduled = scheduler.post(remaining) {
                 if (closed || isPaused || epoch != generation) return@post
+                if (playing.action == PetAction.WALK && walkStopRequested) {
+                    begin(PetAction.IDLE, ActionOrigin.DEFAULT)
+                    return@post
+                }
                 when {
                     index + 1 < playing.frames.size -> { index++; render() }
                     playing.loop -> { index = 0; render() }
@@ -177,6 +244,10 @@ class AnimationController(
 
     fun resume() {
         if (closed || !isPaused) return
+        if (walkStopRequested) {
+            if (!begin(PetAction.IDLE, ActionOrigin.DEFAULT)) pause()
+            return
+        }
         if (clip == null) { start(); return }
         invalidate(); isPaused = false
         render()

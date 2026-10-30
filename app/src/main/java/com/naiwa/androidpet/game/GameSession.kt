@@ -3,10 +3,9 @@ package com.naiwa.androidpet.game
 import java.io.Serializable
 import java.util.UUID
 import kotlin.math.abs
-import kotlin.math.roundToInt
 
 enum class GameKind(val id: String, val title: String, val description: String, val durationMillis: Long) {
-    DRUM("drum","肚皮打鼓","等圆环靠近肚皮，跟着节拍轻点。",24_000),
+    DRUM("drum","肚皮打鼓","圆环靠拢时，轻点操作区任意位置。先慢慢来，漏一拍也能继续。",DrumRhythm.DURATION_MILLIS),
     COMBO("combo","连击发疯挑战","十五秒内连续轻点，连击越长分数越高。",15_000),
     BUBBLES("bubbles","接住奶泡","左右滑动奶蛙，接住落下来的奶泡。",30_000);
     companion object { fun fromId(id: String?) = entries.firstOrNull { it.id == id } ?: DRUM }
@@ -36,7 +35,8 @@ class GameSession(val kind: GameKind, val id: String = UUID.randomUUID().toStrin
     private val falling = mutableListOf<Bubble>()
     val bubbles: List<Bubble> get() = falling.toList()
     val remainingMillis: Long get() = (kind.durationMillis-elapsedMillis).coerceAtLeast(0)
-    val stage: Int get() = if (maxCombo >= 30) 3 else if (maxCombo >= 10) 2 else 1
+    val stage: Int get() = if (kind == GameKind.DRUM) DrumRhythm.stageAt(elapsedMillis)
+        else if (maxCombo >= 30) 3 else if (maxCombo >= 10) 2 else 1
 
     fun start() { if (phase == GamePhase.READY) phase = GamePhase.RUNNING }
     fun pause() { if (phase == GamePhase.RUNNING) phase = GamePhase.PAUSED }
@@ -48,10 +48,10 @@ class GameSession(val kind: GameKind, val id: String = UUID.randomUUID().toStrin
         elapsedMillis += minOf(deltaMillis,remainingMillis)
         when (kind) {
             GameKind.DRUM -> {
-                var beat = 0
-                while (1000+beat*600L < kind.durationMillis) {
-                    if (elapsedMillis > 1180+beat*600L && judged.add(beat)) { combo = 0; misses++ }
-                    beat++
+                DrumRhythm.beats.forEachIndexed { beat,time ->
+                    if (elapsedMillis > time+DrumRhythm.GOOD_WINDOW_MILLIS && judged.add(beat)) {
+                        combo = 0; misses++
+                    }
                 }
             }
             GameKind.BUBBLES -> {
@@ -81,14 +81,15 @@ class GameSession(val kind: GameKind, val id: String = UUID.randomUUID().toStrin
             score += 10+combo.coerceAtMost(20)
             return HitFeedback.PERFECT
         }
-        val beat = ((elapsedMillis-1000)/600.0).roundToInt().coerceAtLeast(0)
+        val beat = DrumRhythm.nearestBeat(elapsedMillis)
         if (beat in judged) return HitFeedback.IGNORED
-        val error = abs(elapsedMillis-(1000+beat*600L))
+        val error = abs(elapsedMillis-DrumRhythm.beats[beat])
         lastTap = elapsedMillis
         return when {
-            error <= 80 -> { judged.add(beat); score += 100; combo++; maxCombo = maxOf(maxCombo,combo); HitFeedback.PERFECT }
-            error <= 180 -> { judged.add(beat); score += 60; combo++; maxCombo = maxOf(maxCombo,combo); HitFeedback.GOOD }
-            else -> { combo = 0; misses++; HitFeedback.MISS }
+            error <= DrumRhythm.PERFECT_WINDOW_MILLIS -> { judged.add(beat); score += 100; combo++; maxCombo = maxOf(maxCombo,combo); HitFeedback.PERFECT }
+            error <= DrumRhythm.GOOD_WINDOW_MILLIS -> { judged.add(beat); score += 60; combo++; maxCombo = maxOf(maxCombo,combo); HitFeedback.GOOD }
+            // A practice tap gives feedback only. A missed beat is counted once when its window expires.
+            else -> HitFeedback.MISS
         }
     }
 

@@ -43,4 +43,5 @@ media-source/
 *.rar
 # Only the reviewed runtime frames are shared; the publication guard checks hashes.
 !app/src/main/assets/naiwa/*/frame*.png
+!app/src/main/res/mipmap-*/ic_launcher*.png
 app/src/main/assets/naiwa/notices/private-*.txt

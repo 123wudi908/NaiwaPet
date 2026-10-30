@@ -20,8 +20,11 @@ class AutoMoveTest {
         r.playback.clock.advanceBy(1000)
         assertEquals(Position(10,60), r.host.position)
         assertTrue(r.host.moves.all { it.y == 60 && it.x in 10..90 })
-        assertEquals(PetAction.IDLE, r.playback.animation.currentAction)
         assertFalse(r.move.isMoving); assertEquals(1, r.host.saved)
+        val movesAtDeadline = r.host.moves.size
+        r.playback.clock.advanceBy(100)
+        assertEquals(movesAtDeadline, r.host.moves.size)
+        assertEquals(PetAction.IDLE, r.playback.animation.currentAction)
     }
 
     @Test fun `suspending during drag immediately cancels movement and old ticks`() {

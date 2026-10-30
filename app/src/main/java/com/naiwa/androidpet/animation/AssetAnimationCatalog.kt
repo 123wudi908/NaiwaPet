@@ -3,10 +3,12 @@ package com.naiwa.androidpet.animation
 import android.content.res.AssetManager
 import org.json.JSONObject
 
-data class SpriteLayout(val width: Int, val height: Int, val left: Int, val top: Int, val right: Int, val bottom: Int) {
+data class SpriteLayout(val width: Int, val height: Int, val left: Int, val top: Int, val right: Int, val bottom: Int,
+    val renderOffsetX: Int = 0, val renderOffsetY: Int = 0) {
     init {
         require(width in 1..4096 && height in 1..4096 && width.toLong() * height <= 16_777_216L) { "画布最大 4096px / 1600 万像素" }
         require(left >= 0 && top >= 0 && right <= width && bottom <= height && right > left && bottom > top) { "contentBounds 必须在画布内且非空" }
+        require(renderOffsetX in -contentWidth..contentWidth && renderOffsetY in -contentHeight..contentHeight) { "动作绘制偏移不能超出画布尺寸" }
     }
     val contentWidth: Int get() = right - left
     val contentHeight: Int get() = bottom - top
@@ -28,6 +30,7 @@ data class AssetAnimationCatalog(
     val frameLayouts: Map<String, SpriteLayout> = emptyMap(),
     val temporaryActions: Set<PetAction> = emptySet(),
     val referenceHeight: Int = layout.contentHeight,
+    val directionalClips: Map<PetDirection, Map<PetAction, AnimationClip>> = emptyMap(),
 ) {
     companion object {
         private val fallback = SpriteLayout(256, 256, 0, 0, 256, 256)
@@ -75,6 +78,9 @@ data class AssetAnimationCatalog(
                         val crop = settings.getJSONObject("contentBounds")
                         SpriteLayout(canvas.getInt("width"), canvas.getInt("height"), crop.getInt("left"), crop.getInt("top"), crop.getInt("right"), crop.getInt("bottom"))
                     } else layout
+                    // Constant source-pixel placement per action. Never fit each frame to its silhouette.
+                    val placedLayout = actionLayout.copy(renderOffsetX = settings.optInt("renderOffsetX", 0),
+                        renderOffsetY = settings.optInt("renderOffsetY", 0))
                     val paths = frames.map { "$folder/$it" }
                     clips[action] = AnimationClip(action, paths, settings.getInt("fps"), loop,
                         if (settings.has("lastFrameHoldMillis")) settings.getLong("lastFrameHoldMillis") else 0,
@@ -82,7 +88,7 @@ data class AssetAnimationCatalog(
                             List(timing.length()) { timing.getLong(it) }
                         } ?: emptyList(), settings.optBoolean("interruptible", true))
                     if (settings.optBoolean("temporary",config.optBoolean("placeholder",true))) temporaryActions.add(action)
-                    paths.forEach { frameLayouts[it] = actionLayout }
+                    paths.forEach { frameLayouts[it] = placedLayout }
                 } catch (error: Exception) {
                     diagnostics.add("动作不可用：assets/$folder/；${error.message}")
                 }
@@ -90,8 +96,9 @@ data class AssetAnimationCatalog(
             val referenceHeight = config.optInt("referenceHeight",layout.contentHeight)
             if (referenceHeight !in 1..layout.contentHeight)
                 return AssetAnimationCatalog(emptyMap(),layout,true,listOf("参考角色高度超出画布"))
-            return AssetAnimationCatalog(clips, layout, config.optBoolean("placeholder", true), diagnostics, frameLayouts,
-                temporaryActions,referenceHeight)
+            val directional = DirectionalAssetCatalog.load(assets, diagnostics)
+            return AssetAnimationCatalog(clips, layout, config.optBoolean("placeholder", true), diagnostics,
+                frameLayouts + directional.layouts, temporaryActions, referenceHeight, directional.clips)
         }
     }
 }

@@ -4,6 +4,20 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class GameSessionTest {
+    @Test fun earlyDrumTapsDoNotDoublePenalizeBeat() {
+        val game = GameSession(GameKind.DRUM,"early",1)
+        game.start(); game.advance(200)
+        repeat(4) {
+            assertEquals(HitFeedback.MISS,game.tap())
+            game.advance(100)
+        }
+        assertEquals(0,game.misses)
+        game.advance(1100)
+        assertEquals(1,game.misses)
+        game.advance(50)
+        assertEquals(1,game.misses)
+    }
+
     @Test fun `ready paused and finished games cannot accept scoring input`() {
         val game = GameSession(GameKind.COMBO,"one",7)
         game.tap(); assertEquals(0,game.score)
@@ -16,12 +30,12 @@ class GameSessionTest {
     }
     @Test fun `rhythm judges only one input per beat and distinguishes timing quality`() {
         val game = GameSession(GameKind.DRUM,"drum",1)
-        game.start(); game.advance(1000)
+        game.start(); game.advance(1400)
         assertEquals(HitFeedback.PERFECT,game.tap()); assertEquals(100,game.score)
         assertEquals(HitFeedback.IGNORED,game.tap()); assertEquals(100,game.score)
-        game.advance(740)
+        game.advance(1100)
         assertEquals(HitFeedback.GOOD,game.tap()); assertEquals(160,game.score)
-        game.advance(450)
+        game.advance(700)
         assertEquals(HitFeedback.PERFECT,game.tap())
     }
     @Test fun `combo rate limit and nine hundred millisecond window prevent duplicate scoring`() {
@@ -46,12 +60,12 @@ class GameSessionTest {
     }
     @Test fun `restored game preserves random sequence score timer and already judged beats`() {
         val game = GameSession(GameKind.DRUM,"persistent",17)
-        game.start();game.advance(1000);game.tap();game.pause()
+        game.start();game.advance(1400);game.tap();game.pause()
         val restored = GameSession.restore(game.snapshot())
         assertEquals(GamePhase.PAUSED,restored.phase)
         assertEquals(100,restored.score)
         restored.resume();assertEquals(HitFeedback.IGNORED,restored.tap())
-        restored.advance(600); assertEquals(HitFeedback.PERFECT,restored.tap())
+        restored.advance(900); assertEquals(HitFeedback.PERFECT,restored.tap())
         assertEquals("persistent",restored.id)
     }
     @Test fun `a long frame ends exactly at the deadline and cannot spawn unbounded work`() {

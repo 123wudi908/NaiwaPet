@@ -10,6 +10,8 @@ class PetFrameView(context: Context) : View(context) {
     private val source = Rect()
     private val destination = RectF()
     private var frame: Bitmap? = null
+    private var frameOffsetX = 0f
+    private var frameOffsetY = 0f
     val hasFrame: Boolean get() = frame != null
     var mirrored: Boolean = false
         set(value) { if (field != value) { field = value; invalidate() } }
@@ -21,8 +23,11 @@ class PetFrameView(context: Context) : View(context) {
         setBackgroundColor(Color.TRANSPARENT)
     }
 
-    fun setFrame(bitmap: Bitmap) {
+    /** Offsets are fractions of the source content canvas, independent of bitmap decode size. */
+    fun setFrame(bitmap: Bitmap, offsetX: Float = 0f, offsetY: Float = 0f) {
         frame = bitmap
+        frameOffsetX = offsetX
+        frameOffsetY = offsetY
         source.set(0, 0, bitmap.width, bitmap.height)
         invalidate()
     }
@@ -48,6 +53,7 @@ class PetFrameView(context: Context) : View(context) {
             val drawnHeight = current.height * scale
             val left = (width - drawnWidth) / 2f
             destination.set(left, height - drawnHeight, left + drawnWidth, height.toFloat())
+            destination.offset(drawnWidth * frameOffsetX, drawnHeight * frameOffsetY)
             paint.color = Color.WHITE
             if (mirrored) { canvas.translate(width.toFloat(),0f); canvas.scale(-1f,1f) }
             canvas.drawBitmap(current, source, destination, paint)
