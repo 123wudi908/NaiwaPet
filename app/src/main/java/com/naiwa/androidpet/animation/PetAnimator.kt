@@ -26,7 +26,7 @@ class PetAnimator(context: Context, view: PetFrameView, host: HorizontalMoveHost
     private val approvedClips = catalog.clips.filterKeys(pool::canDisplay)
     private val sink = PngFrameSink(context.assets, catalog.layout, view, catalog.frameLayouts)
     private val scheduler = AndroidFrameScheduler()
-    private val controller = AnimationController(approvedClips, scheduler, sink, onDiagnostic)
+    private val controller = AnimationController(approvedClips, scheduler, sink, catalog.directionalClips, onDiagnostic)
     private val interaction = PetInteractionController(controller,scheduler,
         BehaviorRandom { kotlin.random.Random.Default.nextInt(it) },pool,behaviorConfig.settings,host,
         { behaviorConfig.settings.moveSpeedDpPerSecond*context.resources.displayMetrics.density },memory::read)
@@ -51,7 +51,6 @@ class PetAnimator(context: Context, view: PetFrameView, host: HorizontalMoveHost
             previousAction = it
             PetDiagnostics.event("animation.start", "action=${it.directory} origin=${controller.currentOrigin}")
             memory.discover(it.directory)
-            if (it != PetAction.WALK) view.mirrored = false
             interaction.onActionChanged()
         }
         controller.failureListener = {
@@ -79,8 +78,16 @@ class PetAnimator(context: Context, view: PetFrameView, host: HorizontalMoveHost
         if(snapshot.movementEnabled!=enabled)PetDiagnostics.event("movement.setting","enabled=$enabled")
         interaction.setMovementEnabled(enabled)
     }
-    fun onTouchDown() = interaction.onTouchDown()
-    fun onTouchReleased() = interaction.onTouchReleased()
+    val currentDirection: PetDirection get() = controller.currentDirection
+    val displayedDirection: PetDirection get() = controller.displayedDirection
+    fun onMovement(dx: Int, dy: Int) {
+        val before = currentDirection
+        controller.faceMovement(dx.toDouble(), dy.toDouble())
+        if (currentDirection != before) PetDiagnostics.event("direction.change",
+            "direction=$currentDirection displayed=$displayedDirection origin=${controller.currentOrigin}")
+    }
+    fun onTouchDown() { controller.resetDirectionMotion(); interaction.onTouchDown() }
+    fun onTouchReleased() { controller.resetDirectionMotion(); interaction.onTouchReleased() }
     fun onTap(): Boolean {
         val feedback = combo.tap(scheduler.nowMillis)
         if (!feedback.accepted) return true
@@ -104,6 +111,7 @@ class PetAnimator(context: Context, view: PetFrameView, host: HorizontalMoveHost
     }
     fun onDragged() { combo.reset(); if (rememberInteractions) memory.interact(InteractionType.DRAG) }
     fun gameFeedback(action: PetAction) = interaction.gameFeedback(action)
+    fun finishPreviewWalk() = controller.finishPreviewWalk()
     fun refreshSettings() { controller.setMotionEnabled(preferences.animationsEnabled) }
     fun setPanelOpen(open: Boolean) {
         PetDiagnostics.event("tasks.panel","open=$open")

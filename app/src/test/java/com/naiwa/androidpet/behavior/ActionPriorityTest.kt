@@ -42,6 +42,8 @@ class ActionPriorityTest {
         r.clock.advanceBy(550)
         assertEquals(PetAction.WALK, r.animation.currentAction)
         r.animation.finishMovement()
+        assertEquals(PetAction.WALK, r.animation.currentAction)
+        r.clock.advanceBy(50)
         assertEquals(PetAction.IDLE, r.animation.currentAction)
         r.animation.request(PetAction.WAVE, ActionOrigin.MANUAL)
         r.animation.finishMovement()

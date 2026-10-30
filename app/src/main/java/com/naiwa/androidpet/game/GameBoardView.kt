@@ -22,6 +22,8 @@ class GameBoardView(context: Context, var session: GameSession, private val onCh
     private var lastUi = 0L
     private var lastPose = 0L
     private var lastScore = 0
+    private var lastMisses = 0
+    private var sessionId = session.id
     private var petSide = 1
     private var hitAt = -1000L
     var feedbackText = ""; private set
@@ -33,6 +35,9 @@ class GameBoardView(context: Context, var session: GameSession, private val onCh
             session.advance((now-lastFrame).coerceAtLeast(0)); lastFrame = now
             if (session.score > lastScore && session.kind == GameKind.BUBBLES) hit(HitFeedback.GOOD)
             lastScore = session.score
+            if(session.kind==GameKind.DRUM && session.misses>lastMisses)
+                feedbackText="漏了一拍，没关系，跟上下一拍"
+            lastMisses=session.misses
             updatePetPosition(); field.invalidate()
             if (now-lastUi >= 100 || session.phase == GamePhase.FINISHED) { lastUi = now; onChanged() }
             postFrame()
@@ -45,6 +50,8 @@ class GameBoardView(context: Context, var session: GameSession, private val onCh
         clipToOutline = true
         addView(field,LayoutParams(-1,-1))
         addView(pet,LayoutParams(1,1,Gravity.BOTTOM or Gravity.START))
+        // Rhythm rings must stay visible over the opaque belly, especially at the hit time.
+        if(session.kind==GameKind.DRUM)field.bringToFront()
         contentDescription = "游戏操作区：${session.kind.description}"
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
     }
@@ -69,11 +76,17 @@ class GameBoardView(context: Context, var session: GameSession, private val onCh
     fun sync() {
         Choreographer.getInstance().removeFrameCallback(frameCallback); posted = false
         lastFrame = SystemClock.uptimeMillis(); lastScore = session.score
+        lastMisses=session.misses
+        if(sessionId!=session.id) {
+            sessionId=session.id;feedbackText="";hitAt=-1000L;lastPose=0L
+            if(session.kind==GameKind.DRUM)pet.play(PetAction.IDLE)
+        }
         // A recreated PAUSED screen still needs its first visible character frame.
         // Only the game clock/targets stop; the visible preview can breathe at idle.
         pet.setActive(active)
         pet.refreshSettings(); field.invalidate(); updatePetPosition(); postFrame()
-        if (session.phase == GamePhase.FINISHED) pet.gameFeedback(PetAction.HAPPY)
+        // Drum's current one-shot finishes into its original idle; no unrelated celebration model.
+        if (session.phase == GamePhase.FINISHED && session.kind != GameKind.DRUM) pet.gameFeedback(PetAction.HAPPY)
     }
     fun setActive(value: Boolean) { active = value; sync() }
     private fun postFrame() {
@@ -107,7 +120,11 @@ class GameBoardView(context: Context, var session: GameSession, private val onCh
     override fun performClick(): Boolean { super.performClick(); return true }
     private fun hit(result: HitFeedback) {
         if (result == HitFeedback.IGNORED) return
-        feedbackText = when (result) { HitFeedback.PERFECT -> "正好！"; HitFeedback.GOOD -> "接住节奏了"; else -> "慢一点，等下一拍" }
+        feedbackText = when (result) {
+            HitFeedback.PERFECT -> if(session.kind==GameKind.DRUM)"正好！ +100" else "正好！"
+            HitFeedback.GOOD -> if(session.kind==GameKind.DRUM)"接住节奏了 +60" else "接住节奏了"
+            else -> "再等一下，圆环合拢时轻点"
+        }
         hitAt = SystemClock.uptimeMillis()
         sound.play(result != HitFeedback.MISS)
         if (result != HitFeedback.MISS) {
@@ -122,7 +139,7 @@ class GameBoardView(context: Context, var session: GameSession, private val onCh
                     else -> PetAction.WOBBLE
                 })
             }
-            if (preferences.animationsEnabled) pet.animate().scaleX(.97f).scaleY(.97f).setDuration(60)
+            if (preferences.animationsEnabled && session.kind!=GameKind.DRUM) pet.animate().scaleX(.97f).scaleY(.97f).setDuration(60)
                 .withEndAction { pet.animate().scaleX(1f).scaleY(1f).setDuration(100).start() }.start()
         }
         field.invalidate()
@@ -142,12 +159,16 @@ class GameBoardView(context: Context, var session: GameSession, private val onCh
             canvas.drawLine(dp(24).toFloat(),height-dp(12).toFloat(),width-dp(24).toFloat(),height-dp(12).toFloat(),paint)
             when (session.kind) {
                 GameKind.DRUM -> {
-                    val phase = (((session.elapsedMillis-1000)%600+600)%600)/600f
                     val cx = width/2f; val cy = height-petSide*.43f-dp(4)
-                    paint.color = NativeStyle.accent; paint.strokeWidth = dp(2).toFloat()
-                    canvas.drawCircle(cx,cy,dp(14).toFloat(),paint)
-                    paint.alpha = 120
-                    canvas.drawCircle(cx,cy,dp(20)+dp(52)*(1-phase),paint);paint.alpha = 255
+                    DrumRhythm.cueAt(session.elapsedMillis)?.let { cue ->
+                        paint.color = NativeStyle.accent
+                        paint.strokeWidth = dp(if(cue.hittable)3 else 2).toFloat()
+                        paint.alpha=if(cue.hittable)255 else 140
+                        canvas.drawCircle(cx,cy,dp(24).toFloat(),paint)
+                        paint.alpha=if(cue.hittable)255 else 180
+                        canvas.drawCircle(cx,cy,dp(24)+dp(48)*(1-cue.progress),paint)
+                        paint.alpha=255
+                    }
                 }
                 GameKind.BUBBLES -> {
                     session.bubbles.forEach { bubble ->

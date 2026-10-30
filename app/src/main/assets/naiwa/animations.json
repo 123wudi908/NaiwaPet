@@ -80,6 +80,7 @@
       "fps": 8,
       "loop": true,
       "temporary": false,
+      "renderOffsetX": 38,
       "frameDurationsMillis": [
         125,
         125,

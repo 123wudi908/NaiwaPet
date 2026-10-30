@@ -5,15 +5,21 @@ import android.app.AlertDialog
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.drawable.RippleDrawable
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.Gravity
 import android.widget.*
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
 import com.naiwa.androidpet.data.PetStateRepository
 import com.naiwa.androidpet.runtime.PetRuntime
 import com.naiwa.androidpet.ui.NativeStyle
+import com.naiwa.androidpet.ui.IconKind
+import com.naiwa.androidpet.ui.UiIcon
 import com.naiwa.androidpet.R
 
 class GameActivity : Activity() {
@@ -24,6 +30,7 @@ class GameActivity : Activity() {
     private lateinit var result: TextView
     private lateinit var mainButton: Button
     private lateinit var pauseButton: Button
+    private lateinit var homeButton: Button
     private lateinit var intro: LinearLayout
     private lateinit var pageScroll: ScrollView
     private var landscape=false
@@ -47,18 +54,28 @@ class GameActivity : Activity() {
     private fun buildPage() {
         landscape=resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(NativeStyle.background) }
-        val toolbar = LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL;setPadding(dp(20),dp(8),dp(20),dp(8)) }
-        toolbar.addView(NativeStyle.button(this,"返回") { exitGame() },LinearLayout.LayoutParams(0,-2,1f))
-        pauseButton = NativeStyle.button(this,"暂停") { session.pause(); board.sync(); renderState() }
-        toolbar.addView(pauseButton,LinearLayout.LayoutParams(0,-2,1f).apply { marginStart=dp(12) })
+        val toolbar = LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL
+            setPadding(dp(20),dp(8),dp(20),dp(8))
+        }
+        toolbar.addView(FrameLayout(this).apply {
+            contentDescription="返回";isClickable=true;isFocusable=true
+            background=RippleDrawable(ColorStateList.valueOf(0x22516E46),NativeStyle.surface(this@GameActivity,Color.WHITE,16),null)
+            addView(UiIcon(this@GameActivity,IconKind.BACK),FrameLayout.LayoutParams(dp(22),dp(22),Gravity.CENTER))
+            setOnClickListener { exitGame() }
+        },LinearLayout.LayoutParams(dp(48),dp(48)))
+        toolbar.addView(NativeStyle.text(this,session.kind.title,18f,true).apply {
+            setPadding(dp(12),0,dp(8),0)
+        },LinearLayout.LayoutParams(0,-2,1f))
+        pauseButton = NativeStyle.button(this,"暂停") { session.pause(); board.sync(); renderState() }.apply { textSize=14f }
+        toolbar.addView(pauseButton,LinearLayout.LayoutParams(-2,-2))
         root.addView(toolbar)
         val body = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(dp(24),dp(8),dp(24),dp(24)) }
         intro=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
-        intro.addView(NativeStyle.text(this,session.kind.title,if(landscape)22f else 28f,true))
         intro.addView(NativeStyle.text(this,session.kind.description,if(landscape)12f else 14f))
         body.addView(intro)
         score = NativeStyle.text(this,"",if(resources.configuration.fontScale>=1.5f)16f else 22f,true)
-        state = NativeStyle.text(this,"",14f)
+        state = NativeStyle.text(this,"",13f)
         if(landscape){body.addView(score);body.addView(state)}else{
             val summary=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(24),0,dp(24),0)}
             summary.addView(score);summary.addView(state);root.addView(summary)
@@ -66,7 +83,10 @@ class GameActivity : Activity() {
         board = GameBoardView(this,session,::renderState)
         val boardHeight = minOf(dp(350),(resources.displayMetrics.heightPixels*.44).toInt()).coerceAtLeast(dp(220))
         if(!landscape)body.addView(board,LinearLayout.LayoutParams(-1,boardHeight).apply { topMargin=dp(12);bottomMargin=dp(12) })
-        result = NativeStyle.text(this,"",15f,true).also { body.addView(it) }
+        result = NativeStyle.text(this,"",15f,true).apply {
+            minHeight=dp(48);gravity=Gravity.CENTER_VERTICAL
+            accessibilityLiveRegion=View.ACCESSIBILITY_LIVE_REGION_POLITE
+        }.also { body.addView(it) }
         mainButton = NativeStyle.button(this,"开始游戏",true) {
             when (session.phase) {
                 GamePhase.READY -> session.start()
@@ -82,13 +102,13 @@ class GameActivity : Activity() {
                 else board.requestRectangleOnScreen(android.graphics.Rect(0,0,board.width,board.height),true)
             }
         }.also { body.addView(it) }
-        body.addView(NativeStyle.button(this,"回到奶蛙之家") {
+        homeButton=NativeStyle.button(this,"回到奶蛙之家") {
             if(session.phase==GamePhase.FINISHED || session.phase==GamePhase.READY){
                 startActivity(Intent(this,com.naiwa.androidpet.MainActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra("page","HOME"))
                 finish()
             }else exitGame()
-        })
+        }.also { body.addView(it) }
         pageScroll = ScrollView(this).apply { isFillViewport=true;addView(body) }
         if(landscape){
             val row=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;setPadding(0,dp(4),dp(20),dp(12))}
@@ -103,15 +123,18 @@ class GameActivity : Activity() {
         score.text = getString(R.string.game_score_combo,session.score,session.combo)
         val seconds = (session.remainingMillis+999)/1000
         state.text = when (session.phase) {
-            GamePhase.READY -> "准备开始"
-            GamePhase.RUNNING -> "${seconds} 秒 · 第 ${session.stage} 阶段"
+            GamePhase.READY -> if(session.kind==GameKind.DRUM)"24 秒 · 先慢后快，漏拍不会结束" else "准备开始"
+            GamePhase.RUNNING -> if(session.kind==GameKind.DRUM)
+                "${seconds} 秒 · ${when(session.stage){1->"慢慢找节奏";2->"轻快一点";else->"跟上这一拍"}}"
+                else "${seconds} 秒 · 第 ${session.stage} 阶段"
             GamePhase.PAUSED -> "已暂停"
             GamePhase.FINISHED -> "这一局结束啦"
         }
         pauseButton.isEnabled = session.phase == GamePhase.RUNNING
-        intro.visibility=if(landscape && session.phase!=GamePhase.READY)View.GONE else View.VISIBLE
+        intro.visibility=if((landscape || session.kind==GameKind.DRUM) && session.phase!=GamePhase.READY)View.GONE else View.VISIBLE
         mainButton.visibility = if (session.phase == GamePhase.RUNNING) View.GONE else View.VISIBLE
         mainButton.text = when (session.phase) { GamePhase.PAUSED -> "继续游戏"; GamePhase.FINISHED -> "再玩一次"; else -> "开始游戏" }
+        homeButton.visibility=if(session.phase==GamePhase.RUNNING)View.GONE else View.VISIBLE
         if (session.phase == GamePhase.FINISHED) {
             val memory = PetStateRepository.get(this)
             if (settledId != session.id) {
@@ -120,7 +143,14 @@ class GameActivity : Activity() {
             }
             val best = memory.read().bestScores[session.kind.id] ?: 0
             result.text = getString(R.string.game_settlement,session.score,best,session.maxCombo)
-        } else result.text = if (session.phase == GamePhase.RUNNING) board.feedbackText else "在应用里玩，切到后台会自动暂停。"
+        } else result.text = when {
+            session.phase==GamePhase.RUNNING -> board.feedbackText.ifBlank {
+                if(session.kind==GameKind.DRUM)"等圆环合拢，轻点一下" else ""
+            }
+            session.phase==GamePhase.PAUSED -> "休息一下，节拍也在等你。"
+            session.kind==GameKind.DRUM -> "圆环合拢时会变深，前后稍有偏差也算。"
+            else -> "在应用里玩，切到后台会自动暂停。"
+        }
     }
     private fun exitGame() {
         if (session.phase == GamePhase.RUNNING) { session.pause();board.sync();renderState() }

@@ -10,11 +10,17 @@ const forbiddenExtension = /\.(?:jpe?g|gif|webp|bmp|svg|mp4|mov|webm|blend|glb|g
 const forbiddenDirectory = /(^|\/)(?:media-source|backups|dist|\.tooling|\.gradle|\.kotlin|__pycache__|build)(\/|$)/;
 const manifest = JSON.parse(await readFile('docs/asset-manifest.json', 'utf8'));
 const framePaths = Object.keys(manifest);
+const launcherManifest = JSON.parse(await readFile('docs/launcher-manifest.json', 'utf8'));
+const launcherPaths = Object.keys(launcherManifest);
+assert.equal(launcherPaths.length, 15, 'Expected the confirmed launcher exports in five densities');
+assert(launcherPaths.every(path => /^app\/src\/main\/res\/mipmap-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/ic_launcher(?:_round|_foreground)?\.png$/.test(path)), 'Unexpected launcher path');
+const reviewedPng = { ...manifest, ...launcherManifest };
 assert.equal(framePaths.length, 86, 'Expected the 86 reviewed runtime frames');
 assert(framePaths.every(path => /^app\/src\/main\/assets\/naiwa\/[a-z_]+\/frame\d+\.png$/.test(path)), 'Unexpected runtime frame path');
 const noticePaths = new Set(['app/src/main/assets/naiwa/notices/materials.txt']);
 assert(framePaths.every(path => files.includes(path)), 'All reviewed frames must be tracked');
-assert.equal(files.filter(path => /\.png$/i.test(path)).length, framePaths.length, 'Unexpected PNG outside reviewed manifest');
+assert(launcherPaths.every(path => files.includes(path)), 'All confirmed launcher exports must be tracked');
+assert.equal(files.filter(path => /\.png$/i.test(path)).length, framePaths.length + launcherPaths.length, 'Unexpected PNG outside reviewed manifests');
 const secretPatterns = [
   /(?:github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9]{20,})/,
   /(?:AKIA|ASIA)[A-Z0-9]{16}/,
@@ -30,8 +36,8 @@ for (const path of files) {
   }
   if (path === 'gradle/wrapper/gradle-wrapper.jar') continue;
   const bytes = await readFile(path);
-  if (Object.hasOwn(manifest, path)) {
-    assert.equal(createHash('sha256').update(bytes).digest('hex'), manifest[path], `Reviewed frame changed: ${path}`);
+  if (Object.hasOwn(reviewedPng, path)) {
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), reviewedPng[path], `Reviewed PNG changed: ${path}`);
     assert(bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])), `Invalid PNG: ${path}`);
     continue;
   }
@@ -50,4 +56,4 @@ assert(approved.some(action => action.action === 'idle'), 'Idle must be availabl
 assert.equal(report.actions.filter(action => action.materialStatus === 'missing').length, 10);
 const workflow = await readFile('.github/workflows/android-build.yml', 'utf8');
 assert(!/app\/build\/outputs|releases\/upload|gh release|softprops\/action-gh-release/.test(workflow), 'Workflow must not publish APKs or Releases');
-console.log(`Publication verified: ${files.length} tracked files, 14 actions / 86 reviewed PNGs, 10 missing actions, no reference media, signing keys or APKs.`);
+console.log(`Publication verified: ${files.length} tracked files, 14 actions / 86 reviewed frames, 15 confirmed launcher PNGs, 10 missing actions, no reference media, signing keys or APKs.`);

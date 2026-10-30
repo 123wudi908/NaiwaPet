@@ -51,7 +51,7 @@ class UpdateUi(private val activity: Activity, private val manager: UpdateManage
         val panel = card(parent)
         val installed = try { ApkIdentity.installedInfo(activity) } catch (_: Exception) { null }
         text(panel, "版本与更新", 19f, true)
-        text(panel, if (installed == null) "当前版本不可读取" else "当前版本 ${installed.versionName} · versionCode ${ApkIdentity.version(installed)}", 13f)
+        text(panel, if (installed == null) "当前版本不可读取" else "当前版本 v${installed.versionName?.removeSuffix("-personal")?.removePrefix("v")}", 13f)
         toggle(panel, "自动检查更新", "启动时及后台低频检查；关闭后可随时手动检查。", manager.automatic) { manager.setAutomatic(it) }
         manager.schedulingError?.let {
             text(panel, it, 13f)
@@ -98,8 +98,7 @@ class UpdateUi(private val activity: Activity, private val manager: UpdateManage
         val panel = card(parent, NativeStyle.cream)
         val installed = try { ApkIdentity.installedInfo(activity) } catch (_: Exception) { null }
         text(panel, "准备好迎接新版本", 20f, true)
-        text(panel, "当前 ${installed?.versionName ?: "未知"}  →  ${release.manifest.versionName}", 15f, true)
-        text(panel, "目标 versionCode ${release.manifest.versionCode}", 12f)
+        text(panel, "当前 v${installed?.versionName?.removeSuffix("-personal")?.removePrefix("v") ?: "未知"}  →  ${release.manifest.versionName}", 15f, true)
         if (release.publishedAt.isNotBlank()) text(panel, "发布时间 ${date(release.publishedAt)}", 12f)
         text(panel, "APK 大小 ${android.text.format.Formatter.formatShortFileSize(activity, release.manifest.size)}", 13f)
         val notes = card(parent)

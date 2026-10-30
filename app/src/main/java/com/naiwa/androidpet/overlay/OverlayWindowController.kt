@@ -108,9 +108,10 @@ class OverlayWindowController(
             override val size: PetSize get() = params?.let { PetSize(it.width,it.height) } ?: petSize
             override val area: ScreenArea get() = screenArea()
             override fun moveTo(position: Position) { safely {
-                if (position.x != currentPosition().x && animator?.currentAction == PetAction.WALK)
-                    pet?.mirrored = position.x < currentPosition().x
+                val before = currentPosition()
                 onMove(position)
+                val after = currentPosition()
+                animator?.onMovement(after.x - before.x, after.y - before.y)
             } }
             override fun savePosition() { safely(onDragEnd) }
         }
@@ -256,7 +257,11 @@ class OverlayWindowController(
                     cancelLongPress(); gestureCancelled = true; drag.finish(); onDragEnd(); animator?.onTouchReleased()
                 }
                 MotionEvent.ACTION_MOVE -> if (!gestureCancelled) drag.move(event.rawX, event.rawY)?.let {
-                    cancelLongPress(); onMove(it)
+                    cancelLongPress()
+                    val before = currentPosition()
+                    onMove(it)
+                    val after = currentPosition()
+                    animator?.onMovement(after.x - before.x, after.y - before.y)
                 }
                 MotionEvent.ACTION_UP -> {
                     cancelLongPress()
