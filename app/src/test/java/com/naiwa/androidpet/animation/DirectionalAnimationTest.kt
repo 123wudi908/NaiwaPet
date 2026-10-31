@@ -56,15 +56,18 @@ class DirectionalAnimationTest {
         assertEquals("left/idle.png", sink.path)
     }
 
-    @Test fun `movement retains walk ownership while showing directional static idle`() {
+    @Test fun `movement plays the belly holding gait and finishes its visible frame before idle`() {
         val clock = Clock(); val sink = Sink()
         val player = AnimationController(fronts, clock, sink, directions) { fail(it) }
         player.start(); assertTrue(player.request(PetAction.WALK, ActionOrigin.MOVEMENT))
         player.faceMovement(-20.0, 0.0)
-        assertEquals("left/idle.png", sink.path)
+        assertEquals("front/walk.png", sink.path)
+        assertEquals(PetDirection.LEFT, player.displayedDirection)
         assertEquals(PetAction.WALK, player.currentAction)
         assertEquals(ActionOrigin.MOVEMENT, player.currentOrigin)
         player.finishMovement()
+        assertEquals(PetAction.WALK, player.currentAction)
+        clock.advance(100)
         assertEquals(PetAction.IDLE, player.currentAction)
         assertEquals("left/idle.png", sink.path)
     }

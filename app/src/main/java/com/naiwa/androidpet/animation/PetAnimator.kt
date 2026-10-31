@@ -87,7 +87,12 @@ class PetAnimator(context: Context, view: PetFrameView, host: HorizontalMoveHost
             "direction=$currentDirection displayed=$displayedDirection origin=${controller.currentOrigin}")
     }
     fun onTouchDown() { controller.resetDirectionMotion(); interaction.onTouchDown() }
-    fun onTouchReleased() { controller.resetDirectionMotion(); interaction.onTouchReleased() }
+    fun onDragMovement(dx: Int, dy: Int) {
+        onMovement(dx, dy)
+        if (controller.currentAction != PetAction.WALK || controller.currentOrigin != ActionOrigin.DRAG)
+            controller.request(PetAction.WALK, ActionOrigin.DRAG)
+    }
+    fun onTouchReleased() { controller.finishDrag(); controller.resetDirectionMotion(); interaction.onTouchReleased() }
     fun onTap(): Boolean {
         val feedback = combo.tap(scheduler.nowMillis)
         if (!feedback.accepted) return true
@@ -134,7 +139,7 @@ class PetAnimator(context: Context, view: PetFrameView, host: HorizontalMoveHost
         PetDiagnostics.event(if (visible) "tasks.resume" else "tasks.pause", "action=${controller.currentAction}")
         this.visible = visible
         refreshSettings()
-        if (!visible) { interaction.setVisible(false); controller.pause() }
+        if (!visible) { controller.finishDrag(); interaction.setVisible(false); controller.pause() }
         else {
             if (!started) { started = true; controller.start() } else controller.resume()
             interaction.setVisible(true)

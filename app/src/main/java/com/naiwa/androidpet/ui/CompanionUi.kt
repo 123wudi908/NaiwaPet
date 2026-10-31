@@ -143,25 +143,35 @@ class CompanionUi(private val activity: Activity, private val preferences: PetPr
             accessibilityLiveRegion=View.ACCESSIBILITY_LIVE_REGION_POLITE
         })
         val stage = LinearLayout(activity).apply {
-            orientation=LinearLayout.VERTICAL;setPadding(dp(16),dp(8),dp(16),dp(12))
+            orientation=LinearLayout.VERTICAL;setPadding(dp(16),dp(12),dp(16),dp(16))
             background=NativeStyle.surface(activity,NativeStyle.cream,NativeStyle.Radius.stage)
         }
+        currentAction=NativeStyle.text(activity,"现在：待机",12f).apply{setPadding(0,0,0,0)}.also { stage.addView(it) }
         val pet = newPreview { message -> bubble?.text=message }
         pet.onLongPress = { show(AppPage.ACTIONS) }
-        stage.addView(pet,LinearLayout.LayoutParams(-1,dp(184)))
+        stage.addView(pet,LinearLayout.LayoutParams(-1,dp(160)))
         bubble = NativeStyle.text(activity,"轻点打招呼，连点有惊喜。",13f).apply { gravity=Gravity.CENTER;minHeight=dp(32) }
             .also { stage.addView(it) }
+        stage.addView(View(activity).apply { setBackgroundColor(NativeStyle.border) },
+            LinearLayout.LayoutParams(-1,dp(1)).apply { topMargin=dp(8);bottomMargin=dp(8) })
+        stage.addView(NativeStyle.text(activity,"今天想做什么",15f,true).apply { setPadding(0,0,0,dp(4)) })
+        stage.addView(NativeStyle.button(activity,"打个招呼") { pet.greet() }.apply { textSize=15f })
+        val shortcuts=LinearLayout(activity).apply { orientation=LinearLayout.HORIZONTAL }
+        shortcuts.addView(NativeStyle.button(activity,"去玩一局") { show(AppPage.PLAY) }.apply { textSize=14f },
+            LinearLayout.LayoutParams(0,-2,1f).apply { topMargin=dp(8);marginEnd=dp(4) })
+        shortcuts.addView(NativeStyle.button(activity,"看看养成记忆") { show(AppPage.CARE) }.apply { textSize=14f },
+            LinearLayout.LayoutParams(0,-2,1f).apply { topMargin=dp(8);marginStart=dp(4) })
+        stage.addView(shortcuts)
         body.addView(stage)
-        statStrip()
-        currentAction=NativeStyle.text(activity,"现在：待机",12f).apply{setPadding(0,dp(4),0,dp(4))}.also { body.addView(it) }
         pet.stateListener = { currentAction?.text=activity.getString(R.string.home_action_now,activity.getString(it.action?.labelResource() ?: R.string.action_idle)) }
-        startButton=button("开启桌宠",true) { if(PetRuntime.running)stopPet() else startPet() }
-        controlsButton=button("打开操作面板") { controls() }
+        val desktopControls=LinearLayout(activity).apply { orientation=LinearLayout.HORIZONTAL }
+        startButton=NativeStyle.button(activity,"开启桌宠",true) { if(PetRuntime.running)stopPet() else startPet() }
+            .also { desktopControls.addView(it,LinearLayout.LayoutParams(0,-2,1f).apply { marginEnd=dp(4) }) }
+        controlsButton=NativeStyle.button(activity,"打开操作面板") { controls() }
+            .also { desktopControls.addView(it,LinearLayout.LayoutParams(0,-2,1f).apply { marginStart=dp(4) }) }
+        body.addView(desktopControls,LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(12) })
         text("桌面上：轻点互动 · 长按开面板 · 拖动换位置",12f)
-        section("今天想做什么")
-        menuRow("打个招呼","奶蛙会用动作和一句话回应你。") { pet.greet() }
-        menuRow("去玩一局","打鼓、连击，还有软软的奶泡。") { show(AppPage.PLAY) }
-        menuRow("看看养成记忆","心情、亲密度和刚解锁的成就。") { show(AppPage.CARE) }
+        statStrip()
     }
 
     private fun actions() {

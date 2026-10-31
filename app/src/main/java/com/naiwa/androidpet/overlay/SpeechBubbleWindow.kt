@@ -16,6 +16,8 @@ import com.naiwa.androidpet.ui.NativeStyle
 class SpeechBubbleWindow(private val context: Context, private val manager: WindowManager) {
     private val handler = Handler(Looper.getMainLooper())
     private var bubble: TextView? = null
+    private var params: WindowManager.LayoutParams? = null
+    private var abovePet = true
     fun show(text: String, position: Position, size: PetSize, area: ScreenArea) {
         close()
         val width = minOf(dp(210),area.width)
@@ -28,7 +30,8 @@ class SpeechBubbleWindow(private val context: Context, private val manager: Wind
         label.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),
             View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED))
         val height = label.measuredHeight.coerceAtMost(area.height)
-        val y = if (position.y-height-dp(8) >= area.top) position.y-height-dp(8) else position.y+size.height+dp(8)
+        abovePet = position.y-height-dp(8) >= area.top
+        val y = if (abovePet) position.y-height-dp(8) else position.y+size.height+dp(8)
         if (y < area.top || y+height > area.bottom) return
         val p = WindowManager.LayoutParams(width,height,WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
@@ -40,12 +43,35 @@ class SpeechBubbleWindow(private val context: Context, private val manager: Wind
             alpha = .8f; title = "Naiwa local speech"
             if (android.os.Build.VERSION.SDK_INT >= 30) setFitInsetsTypes(0)
         }
-        try { manager.addView(label,p); bubble = label; handler.postDelayed({ close() },1800) }
+        try { manager.addView(label,p); bubble = label; params = p; handler.postDelayed({ close() },1800) }
         catch (error: RuntimeException) { PetDiagnostics.event("speech.unavailable",error = error) }
     }
+
+    /** Follow the pet's applied window bounds without recreating the label or extending its lifetime. */
+    fun follow(position: Position, size: PetSize, area: ScreenArea) {
+        val label = bubble ?: return
+        val p = params ?: return
+        val width = minOf(dp(210), area.width)
+        if (width != p.width) {
+            label.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
+            p.width = width; p.height = label.measuredHeight.coerceAtMost(area.height)
+        }
+        p.height = label.measuredHeight.coerceAtMost(area.height)
+        val above = position.y-p.height-dp(8)
+        val below = position.y+size.height+dp(8)
+        // Keep the original anchor side until it no longer fits the safe screen area.
+        if (abovePet && above < area.top && below+p.height <= area.bottom) abovePet = false
+        else if (!abovePet && below+p.height > area.bottom && above >= area.top) abovePet = true
+        p.x = (position.x+(size.width-p.width)/2).coerceIn(area.left, area.right-p.width)
+        p.y = (if (abovePet) above else below).coerceIn(area.top, area.bottom-p.height)
+        try { manager.updateViewLayout(label, p) }
+        catch (error: RuntimeException) { PetDiagnostics.event("speech.move_failed",error = error); close() }
+    }
+
     fun close() {
         handler.removeCallbacksAndMessages(null)
-        val old = bubble; bubble = null
+        val old = bubble; bubble = null; params = null
         if (old != null) try { manager.removeViewImmediate(old) }
         catch (error: RuntimeException) { PetDiagnostics.event("speech.remove_failed",error = error) }
     }
