@@ -1,8 +1,16 @@
 # NaiwaPet · 奶蛙 Android 桌宠
 
-原生 Kotlin / Android View / WindowManager 桌宠项目。当前代码版本为 `0.7.0`，`versionCode = 7`，包名为 `com.naiwa.androidpet`。
+原生 Kotlin / Android View / WindowManager 桌宠项目。当前代码版本为 `0.7.1`，`versionCode = 8`，包名为 `com.naiwa.androidpet`。
 
 仓库包含原生 Android 源码、构建配置及 **14 组、86 帧透明 PNG 动作**。原始参考图、视频、生成过程稿、历史备份、签名私钥和 APK 不随仓库提供。
+
+## v0.7.1
+
+- 首页“今天想做什么”紧邻奶蛙展示区，招呼、游戏和养成记忆入口无需向下寻找。
+- 拖动时连续播放原有抱肚迈腿 PNG 动画，松手后回到待机。
+- 向左移动时完整翻转角色，头、身体和手脚朝向一致；转向保留步伐进度。
+- 台词气泡随桌宠同步移动，保留文字和自动消失时限。
+- 保留原有全部动作、图鉴、小游戏和养成功能，原86帧及更新安全校验保持不变。
 
 ## v0.7.0
 

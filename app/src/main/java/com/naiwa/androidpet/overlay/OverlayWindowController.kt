@@ -234,6 +234,7 @@ class OverlayWindowController(
         p.width = size.width; p.height = size.height
         p.x = clamped.x; p.y = clamped.y
         if (container.isAttachedToWindow) manager.updateViewLayout(container, p) else ensureAttached()
+        speech.follow(clamped, size, area)
         try { repositionPanel() } catch (error: RuntimeException) { panelFailure(error) }
     }
 
@@ -261,7 +262,7 @@ class OverlayWindowController(
                     val before = currentPosition()
                     onMove(it)
                     val after = currentPosition()
-                    animator?.onMovement(after.x - before.x, after.y - before.y)
+                    animator?.onDragMovement(after.x - before.x, after.y - before.y)
                 }
                 MotionEvent.ACTION_UP -> {
                     cancelLongPress()
@@ -380,7 +381,7 @@ class OverlayWindowController(
         updateSelection(state.action)
         val mode = viewContext.getString(if (state.action == PetAction.IDLE) R.string.action_default else when (state.origin) {
             ActionOrigin.MANUAL -> R.string.action_manual
-            ActionOrigin.TAP -> R.string.action_tap
+            ActionOrigin.TAP, ActionOrigin.DRAG -> R.string.action_tap
             ActionOrigin.GAME -> R.string.action_game
             ActionOrigin.AUTOMATIC -> R.string.action_automatic
             ActionOrigin.MOVEMENT -> R.string.action_movement

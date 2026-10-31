@@ -15,7 +15,7 @@ enum class PetAction(val directory: String, val optional: Boolean = false, val g
     CRY("cry", true, ActionGroup.EXTENSION), DRINK("drink", true, ActionGroup.EXTENSION)
 }
 
-enum class ActionOrigin { DEFAULT, AUTOMATIC, MOVEMENT, TAP, GAME, MANUAL, MANUAL_MOVEMENT }
+enum class ActionOrigin { DEFAULT, AUTOMATIC, MOVEMENT, TAP, GAME, MANUAL, MANUAL_MOVEMENT, DRAG }
 
 class AnimationClip(val action: PetAction, frames: List<String>, val fps: Int, val loop: Boolean,
     val lastFrameHoldMillis: Long = 0, frameDurationsMillis: List<Long> = emptyList(),
@@ -43,6 +43,11 @@ interface FrameScheduler {
 interface FrameSink {
     /** Complete on the same thread as the controller. A newer request invalidates older deliveries. */
     fun present(path: String, completion: (Result<Unit>) -> Unit)
+    /** Apply facing with the delivered bitmap, so a pending decode cannot flash the old heading. */
+    fun present(path: String, mirrored: Boolean, completion: (Result<Unit>) -> Unit) {
+        setMirrored(mirrored); present(path, completion)
+    }
+    fun setMirrored(mirrored: Boolean) {}
     /** Cancel asynchronous deliveries without erasing the last successfully displayed frame. */
     fun cancelPending() {}
     fun clear()
@@ -62,10 +67,13 @@ class AnimationController(
 
     private val animations = DirectionalAnimationSet(clips, directionalClips)
     private val facing = DirectionState()
+    private var walkDirection = PetDirection.RIGHT
     private val failedDirectionalClips = mutableSetOf<Pair<PetDirection, PetAction>>()
     val currentDirection: PetDirection get() = facing.direction
     var displayedDirection = PetDirection.FRONT
         private set
+    private var mirrored = false
+    private var directionalArt = false
     private var clip: AnimationClip? = null
     private var index = 0
     private var generation = 0L
@@ -102,6 +110,11 @@ class AnimationController(
             finishWalkAtFrameBoundary()
     }
 
+    fun finishDrag() {
+        if (!closed && currentAction == PetAction.WALK && currentOrigin == ActionOrigin.DRAG)
+            finishWalkAtFrameBoundary()
+    }
+
     /** The gallery owns a GAME walk; its old timer must not end a newer manual action. */
     fun finishPreviewWalk() {
         if (!closed && currentAction == PetAction.WALK && currentOrigin == ActionOrigin.GAME)
@@ -124,13 +137,25 @@ class AnimationController(
         if (closed) return
         val old = currentDirection
         facing.moveBy(dx, dy)
+        when (currentDirection) {
+            PetDirection.FRONT_LEFT, PetDirection.LEFT, PetDirection.BACK_LEFT -> walkDirection = PetDirection.LEFT
+            PetDirection.FRONT_RIGHT, PetDirection.RIGHT, PetDirection.BACK_RIGHT -> walkDirection = PetDirection.RIGHT
+            else -> Unit // Vertical drags retain their last lateral facing.
+        }
         if (old == currentDirection) return
         val action = currentAction ?: return
         // One-shot actions keep their original timing, final hold, and interruption rules.
         if (action != PetAction.IDLE && action != PetAction.WALK) return
         val next = resolve(action, currentOrigin) ?: return
+        if (clip === next.clip) {
+            // Reversing a drag changes only the whole-frame mirror, never the gait phase/timer.
+            displayedDirection = next.direction; mirrored = next.mirrored
+            sink.setMirrored(mirrored)
+            return
+        }
         invalidate(); sink.cancelPending()
-        clip = next.clip; displayedDirection = next.direction; index = 0
+        clip = next.clip; displayedDirection = next.direction; mirrored = next.mirrored
+        directionalArt = next.directionalArt; index = 0
         if (!isPaused) render()
     }
 
@@ -138,7 +163,8 @@ class AnimationController(
 
     private fun resolve(action: PetAction, origin: ActionOrigin): FacingAnimation? =
         animations.resolve(action, if ((currentDirection to action) in failedDirectionalClips)
-            PetDirection.FRONT else currentDirection, origin)
+            PetDirection.FRONT else if (action == PetAction.WALK &&
+                currentDirection in setOf(PetDirection.FRONT, PetDirection.BACK)) walkDirection else currentDirection, origin)
 
     fun start() { if (!begin(PetAction.IDLE, ActionOrigin.DEFAULT)) pause() }
 
@@ -154,7 +180,8 @@ class AnimationController(
         invalidate()
         walkStopRequested = false
         framePresented = false
-        clip = next.clip; displayedDirection = next.direction
+        clip = next.clip; displayedDirection = next.direction; mirrored = next.mirrored
+        directionalArt = next.directionalArt
         index = 0; isPaused = false; currentOrigin = origin
         actionListener?.invoke(action)
         render()
@@ -173,11 +200,11 @@ class AnimationController(
         val path = playing.frames[index]
         val started = scheduler.nowMillis
         framePresented = false
-        sink.present(path) { result ->
+        sink.present(path, mirrored) { result ->
             if (closed || isPaused || epoch != generation) return@present
             if (result.isFailure) {
                 diagnostic("PNG 播放失败：assets/$path；${result.exceptionOrNull()?.message ?: "无法解码"}")
-                if (displayedDirection != PetDirection.FRONT) {
+                if (directionalArt) {
                     // Optional turntable art must never disable the admitted original action.
                     failedDirectionalClips.add(currentDirection to playing.action)
                     if (!begin(playing.action, currentOrigin)) pause()

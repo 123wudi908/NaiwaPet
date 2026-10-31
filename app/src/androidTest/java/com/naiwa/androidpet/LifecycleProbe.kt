@@ -20,8 +20,10 @@ class LifecycleProbe : Instrumentation() {
     private var updateOnly=false
     private var v070Only=false
     private var frontAudit=false
-    override fun onCreate(arguments:Bundle?){super.onCreate(arguments);updateOnly=arguments?.getString("updateOnly")=="true";v070Only=arguments?.getString("v070Only")=="true";frontAudit=arguments?.getString("frontAudit")=="true";start()}
+    private var dragHomeOnly=false
+    override fun onCreate(arguments:Bundle?){super.onCreate(arguments);updateOnly=arguments?.getString("updateOnly")=="true";v070Only=arguments?.getString("v070Only")=="true";frontAudit=arguments?.getString("frontAudit")=="true";dragHomeOnly=arguments?.getString("dragHomeOnly")=="true";start()}
     override fun onStart(){
+        if(dragHomeOnly){DragHomeSmoke.run(this);return}
         if(updateOnly){UpdateProbe(this).run();return}
         if(v070Only){V070Probe(this).run();return}
         if(frontAudit){FrontActionAuditProbe(this).run();return}

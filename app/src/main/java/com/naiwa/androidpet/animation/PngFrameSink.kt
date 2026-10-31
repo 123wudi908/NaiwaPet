@@ -31,6 +31,7 @@ class PngFrameSink(
     private var generation = 0L
     private var closed = false
     private var targetPixels = 256
+    private var mirrored = false
 
     fun resize(pixels: Int) {
         val target = pixels.coerceIn(1, 1024)
@@ -41,7 +42,15 @@ class PngFrameSink(
         }
     }
 
-    override fun present(path: String, completion: (Result<Unit>) -> Unit) {
+    override fun present(path: String, completion: (Result<Unit>) -> Unit) = present(path, false, completion)
+
+    override fun setMirrored(mirrored: Boolean) {
+        this.mirrored = mirrored
+        view.mirrored = mirrored
+    }
+
+    override fun present(path: String, mirrored: Boolean, completion: (Result<Unit>) -> Unit) {
+        this.mirrored = mirrored
         val ticket: Long
         val target: Int
         val cached: Bitmap?
@@ -78,6 +87,7 @@ class PngFrameSink(
         val placement = frameLayouts[path] ?: layout
         // Fractions keep source-pixel calibration stable through decoder sampling and View resizing.
         // Apply on cache hits too, so an unshifted IDLE resets the previous action's placement.
+        view.mirrored = mirrored
         view.setFrame(bitmap, placement.renderOffsetX.toFloat() / placement.contentWidth,
             placement.renderOffsetY.toFloat() / placement.contentHeight)
     }
